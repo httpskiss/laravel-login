@@ -47,7 +47,7 @@ class RegisterController extends Controller
         } elseif ($user->hasRole('Finance Officer')) {
             return redirect()->route('finance.dashboard');
         } else {
-            return redirect()->route('employee.dashboard');
+            return redirect()->route('employees.dashboard');
         }
     }
 
