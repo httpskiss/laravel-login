@@ -88,11 +88,11 @@ class AdminDashboardController extends Controller
                 'users.last_name',
                 'users.department',
                 DB::raw('COALESCE(users.profile_photo_path, "default-profile.jpg") as profile_photo_path'),
-                'attendances.check_in'
+                'attendances.time_in'
             )
             ->where('attendances.date', $today)
-            ->whereNotNull('attendances.check_in')
-            ->orderBy('attendances.check_in', 'desc')
+            ->whereNotNull('attendances.time_in')
+            ->orderBy('attendances.time_in', 'desc')
             ->take(5)
             ->get();
 

@@ -322,8 +322,8 @@
                             <span class="font-medium">${i}</span>
                             ${status ? `<span class="text-xs px-1 py-0.5 rounded ${getStatusBadgeClass(status)}">${status.replace('_', ' ')}</span>` : ''}
                         </div>
-                        ${status === 'Present' && attendanceData[dateKey]?.check_in ? `<div class="text-xs mt-1"><i class="fas fa-check-circle mr-1"></i> ${formatTime(attendanceData[dateKey].check_in)}</div>` : ''}
-                        ${status === 'Late' && attendanceData[dateKey]?.check_in ? `<div class="text-xs mt-1"><i class="fas fa-clock mr-1"></i> ${formatTime(attendanceData[dateKey].check_in)}</div>` : ''}
+                        ${status === 'Present' && attendanceData[dateKey]?.time_in ? `<div class="text-xs mt-1"><i class="fas fa-check-circle mr-1"></i> ${formatTime(attendanceData[dateKey].time_in)}</div>` : ''}
+                        ${status === 'Late' && attendanceData[dateKey]?.time_in ? `<div class="text-xs mt-1"><i class="fas fa-clock mr-1"></i> ${formatTime(attendanceData[dateKey].time_in)}</div>` : ''}
                         ${status === 'On_Leave' ? '<div class="text-xs mt-1"><i class="fas fa-umbrella-beach mr-1"></i> On Leave</div>' : ''}
                         ${status === 'Holiday' ? '<div class="text-xs mt-1"><i class="fas fa-gift mr-1"></i> Public Holiday</div>' : ''}
                     `;

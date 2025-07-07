@@ -18,8 +18,8 @@
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
         }
         
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+       .gradient-bg {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
         }
         
         .scrollbar-hide::-webkit-scrollbar {
@@ -188,7 +188,7 @@
                 Quick Actions
             </h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <a href="{{ route('admin.dashboard') }}" class="quick-action-card bg-white rounded-xl shadow-md p-6 flex flex-col items-center justify-center transition-all duration-300 hover:bg-blue-50 group">
+                <a href="{{ route('admin.employees') }}" class="quick-action-card bg-white rounded-xl shadow-md p-6 flex flex-col items-center justify-center transition-all duration-300 hover:bg-blue-50 group">
                     <div class="bg-blue-100 text-blue-600 p-4 rounded-full mb-4 transition-all duration-300 group-hover:bg-blue-200 group-hover:scale-110">
                         <i class="fas fa-user-plus text-2xl"></i>
                     </div>
@@ -293,7 +293,7 @@
                                 <p class="text-xs text-gray-500">{{ $checkin->department }}</p>
                             </div>
                             <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                                {{ \Carbon\Carbon::parse($checkin->check_in)->format('h:i A') }}
+                                {{ \Carbon\Carbon::parse($checkin->time_in)->format('h:i A') }}
                             </span>
                         </div>
                         @endforeach

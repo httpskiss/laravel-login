@@ -1,4 +1,4 @@
-@extends('layouts.employee')
+@extends('layouts.employees')
 
 @section('title', 'Employee Dashboard')
 
@@ -19,7 +19,7 @@
         }
         
         .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
         }
         
         .scrollbar-hide::-webkit-scrollbar {
@@ -57,13 +57,13 @@
     </style>
 
 <main class="p-4 md:p-6">
-    <!-- Welcome Banner -->
+   <!-- Welcome Banner -->
     <div class="container mx-auto px-4">
         <div class="gradient-bg text-white rounded-xl p-6 mb-6 shadow-lg animate-fade-in">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
-                 <div>
-                    <h2 class="text-2xl md:text-3xl font-bold mb-2">Welcome back, {{ $user->first_name }} {{ $user->last_name }}!</h2>
-                    <p class="opacity-90 text-blue-100">{{ $user->department }} Department</p>
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-bold mb-2">Welcome back, {{ auth()->user()->first_name }}!</h2>
+                    <p class="opacity-90 text-blue-100">Here's what's happening today.</p>
                 </div>
                 <div class="mt-4 md:mt-0">
                     <span class="bg-blue-700/50 text-white px-4 py-2 rounded-lg text-sm font-medium backdrop-blur-sm">
@@ -169,24 +169,24 @@
                     <div class="p-4 border border-gray-200 rounded-lg bg-gray-50">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm font-medium text-gray-600">Check-in</span>
-                            <span class="text-xs {{ $attendanceData['check_in_status_class'] }} px-2 py-1 rounded">
-                                {{ $attendanceData['check_in_status'] }}
+                            <span class="text-xs {{ $attendanceData['time_in_status_class'] }} px-2 py-1 rounded">
+                                {{ $attendanceData['time_in_status'] }}
                             </span>
                         </div>
                         <div class="text-2xl font-bold text-gray-800">
-                            {{ $attendanceData['check_in_time'] ?? '--:-- --' }}
+                            {{ $attendanceData['time_in_time'] ?? '--:-- --' }}
                         </div>
                     </div>
                     
                     <div class="p-4 border border-gray-200 rounded-lg bg-gray-50">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm font-medium text-gray-600">Check-out</span>
-                            <span class="text-xs {{ $attendanceData['check_out_status_class'] }} px-2 py-1 rounded">
-                                {{ $attendanceData['check_out_status'] }}
+                            <span class="text-xs {{ $attendanceData['time_out_status_class'] }} px-2 py-1 rounded">
+                                {{ $attendanceData['time_out_status'] }}
                             </span>
                         </div>
                         <div class="text-2xl font-bold text-gray-800">
-                            {{ $attendanceData['check_out_time'] ?? '--:-- --' }}
+                            {{ $attendanceData['time_out_time'] ?? '--:-- --' }}
                         </div>
                     </div>
                 </div>

@@ -92,11 +92,17 @@ class User extends Authenticatable
         return $this->hasMany(Task::class);
     }
     
-    public function attendances(): HasMany
+  // Add this to the User model
+    public function attendances()
     {
         return $this->hasMany(Attendance::class);
     }
 
+    public function todayAttendance()
+    {
+        return $this->hasOne(Attendance::class)->today();
+    }
+    
     public function leaves(): HasMany
     {
         return $this->hasMany(Leave::class);
@@ -108,4 +114,5 @@ class User extends Authenticatable
             ->withPivot('status')
             ->withTimestamps();
     }
+    
 }

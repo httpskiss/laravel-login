@@ -86,12 +86,12 @@ class EmployeeDashboardController extends Controller
                 'status' => 'Absent',
                 'status_class' => 'bg-red-100 text-red-800',
                 'status_indicator' => 'status-absent',
-                'check_in_time' => null,
-                'check_out_time' => null,
-                'check_in_status' => 'Pending',
-                'check_in_status_class' => 'bg-gray-100 text-gray-800',
-                'check_out_status' => 'Pending',
-                'check_out_status_class' => 'bg-gray-100 text-gray-800',
+                'time_in_time' => null,
+                'time_out_time' => null,
+                'time_in_status' => 'Pending',
+                'time_in_status_class' => 'bg-gray-100 text-gray-800',
+                'time_out_status' => 'Pending',
+                'time_out_status_class' => 'bg-gray-100 text-gray-800',
                 'hours_worked' => '0h 0m',
                 'hours_percentage' => 0,
                 'button_text' => 'Check In Now',
@@ -104,31 +104,31 @@ class EmployeeDashboardController extends Controller
         $hoursWorked = '0h 0m';
         $hoursPercentage = 0;
         
-        if ($attendance->check_in && $attendance->check_out) {
-            $checkIn = Carbon::parse($attendance->check_in);
-            $checkOut = Carbon::parse($attendance->check_out);
+        if ($attendance->time_in && $attendance->time_out) {
+            $checkIn = Carbon::parse($attendance->time_in);
+            $checkOut = Carbon::parse($attendance->time_out);
             $diff = $checkOut->diff($checkIn);
             $hoursWorked = $diff->h . 'h ' . $diff->i . 'm';
             $hoursPercentage = min(100, ($diff->h * 60 + $diff->i) / 8 * 100);
         }
 
         // Determine button state
-        $buttonText = $attendance->check_out ? 'Check In Now' : 'Check Out Now';
-        $buttonClass = $attendance->check_out ? 'bg-green-600' : 'bg-blue-600';
-        $buttonPulse = !$attendance->check_out;
+        $buttonText = $attendance->time_out ? 'Check In Now' : 'Check Out Now';
+        $buttonClass = $attendance->time_out ? 'bg-green-600' : 'bg-blue-600';
+        $buttonPulse = !$attendance->time_out;
 
         return [
             'status' => ucfirst(str_replace('_', ' ', $attendance->status)),
             'status_class' => $this->getStatusClass($attendance->status),
             'status_indicator' => 'status-' . strtolower($attendance->status),
-            'check_in_time' => $attendance->check_in ? Carbon::parse($attendance->check_in)->format('h:i A') : null,
-            'check_out_time' => $attendance->check_out ? Carbon::parse($attendance->check_out)->format('h:i A') : null,
-            'check_in_status' => $attendance->check_in ? ($this->isOnTime($attendance->check_in) ? 'On Time' : 'Late') : 'Pending',
-            'check_in_status_class' => $attendance->check_in ? 
-                ($this->isOnTime($attendance->check_in) ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800') : 
+            'time_in_time' => $attendance->time_in ? Carbon::parse($attendance->time_in)->format('h:i A') : null,
+            'time_out_time' => $attendance->time_out ? Carbon::parse($attendance->time_out)->format('h:i A') : null,
+            'time_in_status' => $attendance->time_in ? ($this->isOnTime($attendance->time_in) ? 'On Time' : 'Late') : 'Pending',
+            'time_in_status_class' => $attendance->time_in ? 
+                ($this->isOnTime($attendance->time_in) ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800') : 
                 'bg-gray-100 text-gray-800',
-            'check_out_status' => $attendance->check_out ? 'Completed' : 'Pending',
-            'check_out_status_class' => $attendance->check_out ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800',
+            'time_out_status' => $attendance->time_out ? 'Completed' : 'Pending',
+            'time_out_status_class' => $attendance->time_out ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800',
             'hours_worked' => $hoursWorked,
             'hours_percentage' => $hoursPercentage,
             'button_text' => $buttonText,

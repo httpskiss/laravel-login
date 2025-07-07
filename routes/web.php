@@ -70,19 +70,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
             });
         });
 
-
-        Route::prefix('attendance')->group(function () {
+    // Admin attendance routes
+    Route::prefix('/attendance')->group(function () {
         Route::get('/', [AdminAttendanceController::class, 'index'])->name('admin.attendance');
-        Route::post('/clock-in', [AdminAttendanceController::class, 'clockIn'])->name('attendance.clockIn');
-        Route::post('/clock-out', [AdminAttendanceController::class, 'clockOut'])->name('attendance.clockOut');
-        Route::get('/export', [AdminAttendanceController::class, 'export'])->name('attendance.export');
-        Route::get('/monthly-comparison-data', [AdminAttendanceController::class, 'getMonthlyComparisonData'])->name('attendance.monthlyComparison');
-        Route::get('/{attendance}/edit', [AdminAttendanceController::class, 'edit'])->name('admin.attendance.edit');
+        Route::post('/', [AdminAttendanceController::class, 'store'])->name('admin.attendance.store');
         Route::put('/{attendance}', [AdminAttendanceController::class, 'update'])->name('admin.attendance.update');
         Route::delete('/{attendance}', [AdminAttendanceController::class, 'destroy'])->name('admin.attendance.destroy');
-        
-        Route::get('/attendance/calendar-data', [EmployeeAttendanceController::class, 'getCalendarData']);
-    });     
+        Route::get('/report', [AdminAttendanceController::class, 'report'])->name('admin.attendance.report');
+        Route::get('/export', [AdminAttendanceController::class, 'export'])->name('admin.attendance.export');
+        Route::get('/{id}/details', [AdminAttendanceController::class, 'showDetails'])->name('admin.attendance.details');
+        Route::post('/requests/{id}/approve', [AdminAttendanceController::class, 'approveRequest'])->name('admin.attendance.approve');
+        Route::post('/requests/{id}/reject', [AdminAttendanceController::class, 'rejectRequest'])->name('admin.attendance.reject');
+    });
+
+    // Employee attendance routes
+    Route::prefix('employee/attendance')->group(function () {
+        Route::post('/check', [EmployeeAttendanceController::class, 'check'])->name('employee.attendance.check');
+        Route::get('/', [EmployeeAttendanceController::class, 'index'])->name('employee.attendance');
+    });
 
         
         Route::get('/leaves', function () {
@@ -215,6 +220,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return view('employees.attendance');
         })->name('employees.attendance');
 
+
+        Route::get('/', [EmployeeAttendanceController::class, 'index'])->name('employee.attendance');
+        Route::post('/check', [EmployeeAttendanceController::class, 'check'])->name('employee.attendance.check');
+        Route::post('/regularization', [EmployeeAttendanceController::class, 'regularization'])->name('employee.attendance.regularization');
+
+    
+        Route::get('/', [EmployeeAttendanceController::class, 'index'])->name('employee.attendance');
+        Route::post('/check', [EmployeeAttendanceController::class, 'check'])->name('employee.attendance.check');
+        Route::post('/regularization', [EmployeeAttendanceController::class, 'regularization'])->name('employee.attendance.regularization');
+        Route::get('/all', [EmployeeAttendanceController::class, 'allRecords'])->name('employee.attendance.all');
+
+        
         // Leave
         Route::get('/leave', function () {
             return view('employees.leaves');
