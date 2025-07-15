@@ -6,9 +6,12 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
-        Schema::create('attendances', function (Blueprint $table) {
+       Schema::create('attendances', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->date('date');
@@ -20,6 +23,10 @@ return new class extends Migration
             $table->string('ip_address')->nullable();
             $table->string('device_info')->nullable();
             $table->string('location')->nullable();
+            $table->boolean('is_regularized')->default(false);
+            $table->text('regularization_reason')->nullable();
+            $table->unsignedBigInteger('regularized_by')->nullable();
+            $table->timestamp('regularized_at')->nullable();
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
@@ -27,7 +34,10 @@ return new class extends Migration
         });
     }
 
-    public function down()
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
     {
         Schema::dropIfExists('attendances');
     }

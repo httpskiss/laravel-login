@@ -36,7 +36,7 @@ class AdminDashboardController extends Controller
                 DB::raw('SUM(net_salary) as total_payroll'),
                 DB::raw('SUM(CASE WHEN payroll_status = "paid" THEN net_salary ELSE 0 END) as processed'),
                 DB::raw('SUM(CASE WHEN payroll_status = "pending" THEN net_salary ELSE 0 END) as pending'),
-                // Use your actual role names here instead of "Faculty" and "Staff"
+                // Use your actual role names here instead of "Faculty" and "user"
                 DB::raw('SUM(CASE WHEN EXISTS (SELECT 1 FROM model_has_roles WHERE model_has_roles.model_id = users.id AND model_has_roles.role_id IN (SELECT id FROM roles WHERE name = "Employee")) THEN payrolls.net_salary ELSE 0 END) as employee_payroll'),
                 DB::raw('SUM(CASE WHEN EXISTS (SELECT 1 FROM model_has_roles WHERE model_has_roles.model_id = users.id AND model_has_roles.role_id IN (SELECT id FROM roles WHERE name = "HR Manager")) THEN payrolls.net_salary ELSE 0 END) as hr_payroll')
             )

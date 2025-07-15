@@ -2,206 +2,184 @@
 
 namespace App\Http\Controllers\Attendance;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Attendance;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
-use Auth;
 
 class EmployeeAttendanceController extends Controller
 {
-  
     public function index()
     {
-        $user = Auth::user();
-        $today = Carbon::today();
-        
-
-        $todayAttendance = Attendance::firstOrCreate(
-            ['user_id' => $user->id, 'date' => $today],
-            ['status' => 'not_checked']
-        );
-        
-        // Set default status if no record exists
-        if (!$todayAttendance->exists) {
-            $todayAttendance->status = null;
-        }
-            
-        // Get recent attendance records (last 10)
-        $recentAttendance = Attendance::where('user_id', $user->id)
+        $attendances = Attendance::where('user_id', Auth::id())
             ->orderBy('date', 'desc')
-            ->take(10)
-            ->get();
-            
-        // Calculate monthly stats
-        $monthStart = Carbon::now()->startOfMonth();
-        $monthEnd = Carbon::now()->endOfMonth();
-        
-        $monthAttendance = Attendance::where('user_id', $user->id)
-            ->whereBetween('date', [$monthStart, $monthEnd])
-            ->get();
-            
-        $presentCount = $monthAttendance->where('status', 'present')->count();
-        $lateCount = $monthAttendance->where('status', 'late')->count();
-        $totalWorkingDays = $monthStart->diffInWeekdays($monthEnd);
-        
+            ->paginate(20);
+
+        $todayAttendance = Attendance::where('user_id', Auth::id())
+            ->whereDate('date', today())
+            ->first();
+
         return view('employees.attendance', [
-            'todayAttendance' => $todayAttendance ?? new Attendance(),
-            'recentAttendance' => $recentAttendance,
-            'presentCount' => $presentCount,
-            'lateCount' => $lateCount,
-            'totalWorkingDays' => $totalWorkingDays,
-            'monthAttendance' => $monthAttendance
+            'attendances' => $attendances,
+            'todayAttendance' => $todayAttendance
         ]);
     }
 
     public function check(Request $request)
     {
-        $request->validate([
-            'type' => 'required|in:in,out'
-        ]);
-        
         $user = Auth::user();
-        $now = Carbon::now();
-        $today = Carbon::today();
-        
-        $attendance = Attendance::firstOrNew([
-            'user_id' => $user->id,
-            'date' => $today
-        ]);
-        
-        if ($request->type === 'in') {
-            // Check in logic
-            if ($attendance->time_in) {
+        $now = now();
+        $today = today();
+
+        // Check if today is a weekend
+        if ($today->isWeekend()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Attendance cannot be marked on weekends'
+            ], 400);
+        }
+
+        // Check if user is on leave today
+        $leave = $user->leaves()
+            ->whereDate('start_date', '<=', $today)
+            ->whereDate('end_date', '>=', $today)
+            ->where('status', 'approved')
+            ->first();
+
+        if ($leave) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are on approved leave today'
+            ], 400);
+        }
+
+        // Check existing attendance for today
+        $attendance = Attendance::where('user_id', $user->id)
+            ->whereDate('date', $today)
+            ->first();
+
+        if ($request->type === 'check-in') {
+            if ($attendance && $attendance->time_in) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You have already checked in today'
                 ], 400);
             }
-            
-            $attendance->time_in = $now->toTimeString();
-            $attendance->ip_address = $request->ip();
-            $attendance->device_info = $request->userAgent();
-            
-            // Determine if late (after 8:15 AM for example)
-            $lateThreshold = Carbon::createFromTime(8, 15, 0);
-            $attendance->status = $now->gt($lateThreshold) ? 'late' : 'present';
-            
-            $message = $attendance->status === 'late' 
-                ? 'Checked in (Late)' 
-                : 'Checked in successfully';
-        } else {
-            // Check out logic
-            if (!$attendance->time_in) {
+
+            // Determine if late (assuming work starts at 9:00 AM)
+            $status = 'present';
+            $lateTime = Carbon::createFromTime(9, 0, 0); // 9:00 AM
+            if ($now->gt($lateTime)) {
+                $status = 'late';
+            }
+
+            if (!$attendance) {
+                $attendance = Attendance::create([
+                    'user_id' => $user->id,
+                    'date' => $today,
+                    'time_in' => $now->format('H:i:s'),
+                    'status' => $status,
+                    'ip_address' => $request->ip(),
+                    'device_info' => $request->header('User-Agent'),
+                ]);
+            } else {
+                $attendance->update([
+                    'time_in' => $now->format('H:i:s'),
+                    'status' => $status,
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Checked in successfully',
+                'attendance' => $attendance
+            ]);
+        } else if ($request->type === 'check-out') {
+            if (!$attendance || !$attendance->time_in) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You need to check in first'
                 ], 400);
             }
-            
+
             if ($attendance->time_out) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You have already checked out today'
                 ], 400);
             }
-            
-            $attendance->time_out = $now->toTimeString();
-            
-            // Calculate total hours worked
+
             $timeIn = Carbon::parse($attendance->time_in);
-            $timeOut = Carbon::parse($attendance->time_out);
-            $totalHours = $timeOut->diffInMinutes($timeIn) / 60;
-            $attendance->total_hours = round($totalHours, 2);
-            
-            $message = 'Checked out successfully';
+            $totalHours = round($now->diffInMinutes($timeIn) / 60, 2);
+
+            $attendance->update([
+                'time_out' => $now->format('H:i:s'),
+                'total_hours' => $totalHours,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Checked out successfully',
+                'attendance' => $attendance
+            ]);
         }
-        
-        $attendance->save();
-        
+
         return response()->json([
-            'success' => true,
-            'message' => $message,
-            'data' => $attendance
-        ]);
+            'success' => false,
+            'message' => 'Invalid request'
+        ], 400);
     }
 
     public function regularization(Request $request)
     {
         $request->validate([
-            'date' => 'required|date|before_or_equal:today',
-            'reason' => 'required|string|max:255',
-            'details' => 'required|string',
-            'proof' => 'nullable|file|mimes:jpg,png,pdf|max:10240'
+            'attendance_id' => 'required|exists:attendances,id',
+            'date' => 'required|date',
+            'time_in' => 'required|date_format:H:i',
+            'time_out' => 'required|date_format:H:i|after:time_in',
+            'reason' => 'required|string|max:500',
         ]);
-        
-        $user = Auth::user();
-        $date = Carbon::parse($request->date);
-        
-        // Check if attendance already exists for this date
-        $existing = Attendance::where('user_id', $user->id)
-            ->whereDate('date', $date)
-            ->exists();
-            
-        if ($existing) {
+
+        $attendance = Attendance::findOrFail($request->attendance_id);
+
+        // Check if the attendance belongs to the user
+        if ($attendance->user_id !== Auth::id()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Attendance record already exists for this date'
-            ], 400);
+                'message' => 'Unauthorized action'
+            ], 403);
         }
-        
-        // Handle file upload
-        $proofPath = null;
-        if ($request->hasFile('proof')) {
-            $proofPath = $request->file('proof')->store('attendance-proofs');
-        }
-        
-        // Create regularization request
-        $attendance = new Attendance();
-        $attendance->user_id = $user->id;
-        $attendance->date = $date;
-        $attendance->status = 'pending_regularization';
-        $attendance->notes = "Regularization Request\nReason: {$request->reason}\nDetails: {$request->details}";
-        $attendance->proof_path = $proofPath;
-        $attendance->save();
-        
-        // Here you would typically notify HR/admin about the request
-        
+
+        // Calculate total hours
+        $start = Carbon::parse($request->time_in);
+        $end = Carbon::parse($request->time_out);
+        $totalHours = round($end->diffInMinutes($start) / 60, 2);
+
+        $attendance->update([
+            'date' => $request->date,
+            'time_in' => $request->time_in,
+            'time_out' => $request->time_out,
+            'total_hours' => $totalHours,
+            'regularization_reason' => $request->reason,
+            'is_regularized' => false, // Needs admin approval
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Regularization request submitted successfully',
-            'data' => $attendance
+            'attendance' => $attendance
         ]);
     }
 
     public function allRecords()
     {
-        $user = Auth::user();
-        
-        $allAttendance = Attendance::where('user_id', $user->id)
+        $attendances = Attendance::where('user_id', Auth::id())
             ->orderBy('date', 'desc')
             ->paginate(20);
-            
-        return view('employees.attendance-all', [
-            'allAttendance' => $allAttendance
-        ]);
-    }
 
-    /**
-     * Calculate working days between two dates (excluding weekends)
-     */
-    protected function calculateWorkingDays($startDate, $endDate)
-    {
-        $workingDays = 0;
-        $current = $startDate->copy();
-        
-        while ($current <= $endDate) {
-            if (!$current->isWeekend()) {
-                $workingDays++;
-            }
-            $current->addDay();
-        }
-        
-        return $workingDays;
+        return view('employee.attendance-records', [
+            'attendances' => $attendances
+        ]);
     }
 }

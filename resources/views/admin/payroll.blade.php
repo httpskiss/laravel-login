@@ -671,7 +671,7 @@
             const payrollDistributionChart = new Chart(payrollDistributionCtx, {
                 type: 'bar',
                 data: {
-                    labels: ['Faculty', 'Admin Staff', 'Maintenance', 'Security', 'Others'],
+                    labels: ['Faculty', 'Admin user', 'Maintenance', 'Security', 'Others'],
                     datasets: [{
                         label: 'Salary Distribution',
                         data: [850000, 320000, 45000, 30000, 678],

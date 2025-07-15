@@ -1,4 +1,4 @@
-@extends('layouts.employees')
+@extends('layouts.employee')
 
 @section('title', 'My Travel Orders')
 

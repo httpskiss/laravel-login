@@ -3,588 +3,1051 @@
 @section('title', 'Attendance Management')
 
 @section('content')
-<style>
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .animate-fade-in {
-        animation: fadeIn 0.5s ease-out forwards;
-    }
-    
-    .quick-action-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-    }
-    
-    .gradient-bg {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    .scrollbar-hide::-webkit-scrollbar {
-        display: none;
-    }
-    
-    .scrollbar-hide {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
-    
-    .glow-on-hover:hover {
-        filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.5));
-    }
-    
-    .status-indicator {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        display: inline-block;
-        margin-right: 5px;
-    }
-    
-    .status-present {
-        background-color: #10B981;
-    }
-    
-    .status-late {
-        background-color: #F59E0B;
-    }
-    
-    .status-absent {
-        background-color: #EF4444;
-    }
-</style>
 
-    <!-- Attendance Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 slide-in">
-        <div class="bg-white rounded-lg shadow p-6">
+<div class="flex flex-col h-full" x-data="attendanceModule()" x-cloak>
+    <!-- Error Messages -->
+    @if ($errors->any())
+        <div class="bg-red-50 border-l-4 border-red-400 text-red-700 p-4 mb-6 rounded-md shadow-sm" role="alert">
             <div class="flex items-center">
-                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
-                    <i class="fas fa-users text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <h3 class="text-sm font-medium text-gray-500">Total Staff</h3>
-                    <p class="text-2xl font-semibold text-blue-600">{{ number_format($totalStaff) }}</p>
-                </div>
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <strong class="font-medium">Please fix these errors:</strong>
             </div>
+            <ul class="mt-2 list-disc list-inside text-sm">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
-        
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
+    @endif
+
+    <!-- Attendance Dashboard -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-6 attendance-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500">Today's Present</p>
+                    <h3 class="text-3xl font-bold mt-2">142</h3>
+                </div>
                 <div class="p-3 rounded-full bg-green-100 text-green-600">
                     <i class="fas fa-user-check text-xl"></i>
                 </div>
-                <div class="ml-4">
-                    <h3 class="text-sm font-medium text-gray-500">Present Today</h3>
-                    <p class="text-2xl font-semibold text-green-600">{{ number_format($presentToday) }}</p>
-                </div>
             </div>
+            <p class="text-sm text-gray-500 mt-4"><span class="text-green-500">+5%</span> from yesterday</p>
         </div>
         
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
+        <div class="bg-white rounded-lg shadow p-6 attendance-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500">Today's Absent</p>
+                    <h3 class="text-3xl font-bold mt-2">18</h3>
+                </div>
+                <div class="p-3 rounded-full bg-red-100 text-red-600">
+                    <i class="fas fa-user-slash text-xl"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-4"><span class="text-red-500">-2%</span> from yesterday</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 attendance-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500">Late Arrivals</p>
+                    <h3 class="text-3xl font-bold mt-2">24</h3>
+                </div>
                 <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
                     <i class="fas fa-clock text-xl"></i>
                 </div>
-                <div class="ml-4">
-                    <h3 class="text-sm font-medium text-gray-500">Late Arrivals</h3>
-                    <p class="text-2xl font-semibold text-yellow-600">{{ number_format($lateToday) }}</p>
-                </div>
             </div>
+            <p class="text-sm text-gray-500 mt-4"><span class="text-yellow-500">+3%</span> from yesterday</p>
         </div>
         
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-red-100 text-red-600">
-                    <i class="fas fa-user-times text-xl"></i>
+        <div class="bg-white rounded-lg shadow p-6 attendance-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500">On Leave</p>
+                    <h3 class="text-3xl font-bold mt-2">16</h3>
                 </div>
-                <div class="ml-4">
-                    <h3 class="text-sm font-medium text-gray-500">Absent Today</h3>
-                    <p class="text-2xl font-semibold text-red-600">{{ number_format($absentToday) }}</p>
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                    <i class="fas fa-umbrella-beach text-xl"></i>
                 </div>
             </div>
+            <p class="text-sm text-gray-500 mt-4"><span class="text-blue-500">+1%</span> from yesterday</p>
+        </div>
+    </div>
+    
+    <!-- Attendance Actions -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div class="w-full md:w-auto">
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                </div>
+                <input 
+                    x-model="searchQuery" 
+                    @input="filterAttendances()"
+                    type="text" 
+                    class="block w-full md:w-64 pl-10 pr-3 py-2 border border-gray-200 rounded-lg leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition duration-150 ease-in-out" 
+                    placeholder="Search attendance..."
+                >
+            </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <div class="relative">
+                <input 
+                    x-ref="dateRangePicker"
+                    type="text" 
+                    class="block w-full md:w-48 pl-3 pr-10 py-2 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 bg-white transition duration-150 ease-in-out" 
+                    placeholder="Select date range"
+                    readonly
+                >
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <i class="fas fa-calendar text-gray-400"></i>
+                </div>
+            </div>
+            <select 
+                x-model="selectedDepartment" 
+                @change="filterAttendances()"
+                class="block w-full md:w-48 pl-3 pr-10 py-2 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 bg-white transition duration-150 ease-in-out"
+            >
+                <option value="">All Departments</option>
+                @foreach($departments as $department)
+                    <option value="{{ $department }}">{{ $department }}</option>
+                @endforeach
+            </select>
+            <select 
+                x-model="selectedEmployee" 
+                @change="filterAttendances()"
+                class="block w-full md:w-48 pl-3 pr-10 py-2 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 bg-white transition duration-150 ease-in-out"
+            >
+                <option value="">All Employees</option>
+                @foreach($employees as $employee)
+                    <option value="{{ $employee->id }}">{{ $employee->first_name }} {{ $employee->last_name }}</option>
+                @endforeach
+            </select>
+            <select 
+                x-model="selectedStatus" 
+                @change="filterAttendances()"
+                class="block w-full md:w-40 pl-3 pr-10 py-2 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 bg-white transition duration-150 ease-in-out"
+            >
+                <option value="">All Status</option>
+                <option value="present">Present</option>
+                <option value="absent">Absent</option>
+                <option value="late">Late</option>
+                <option value="on_leave">On Leave</option>
+                <option value="half_day">Half Day</option>
+            </select>
+            @can('attendance-create')
+            <button 
+                @click="openAddAttendanceModal()"
+                class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md transition duration-150 ease-in-out"
+            >
+                <i class="fas fa-plus mr-2"></i> Add Record
+            </button>
+            @endcan
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <!-- Department Summary -->
-        <div class="lg:col-span-1 bg-white rounded-lg shadow overflow-hidden slide-in">
-            <div class="p-6 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Department Summary</h3>
-                <p class="mt-1 text-sm text-gray-500">Attendance by department</p>
-            </div>
-            <div class="p-4">
-                <div class="space-y-4">
-                    @foreach($departmentStats as $dept)
-                        <div>
-                            <div class="flex justify-between text-sm mb-1">
-                                <span>{{ $dept['name'] }}</span>
-                                <span>{{ $dept['percentage'] }}% present</span>
+    <!-- Attendance List -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-6 border border-gray-100">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-100">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition duration-150 ease-in-out" @click="sortAttendances('date')">
+                            <div class="flex items-center">
+                                Date
+                                <i class="fas fa-sort ml-1.5 text-gray-400" :class="{'fa-sort-up text-blue-500': sortColumn === 'date' && sortDirection === 'asc', 'fa-sort-down text-blue-500': sortColumn === 'date' && sortDirection === 'desc'}"></i>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="h-2 rounded-full 
-                                    @if($dept['percentage'] >= 90) bg-green-500
-                                    @elseif($dept['percentage'] >= 80) bg-green-400
-                                    @elseif($dept['percentage'] >= 70) bg-yellow-500
-                                    @else bg-red-500
-                                    @endif" 
-                                    style="width: {{ $dept['percentage'] }}%">
-                                </div>
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition duration-150 ease-in-out" @click="sortAttendances('user.first_name')">
+                            <div class="flex items-center">
+                                Employee
+                                <i class="fas fa-sort ml-1.5 text-gray-400" :class="{'fa-sort-up text-blue-500': sortColumn === 'user.first_name' && sortDirection === 'asc', 'fa-sort-down text-blue-500': sortColumn === 'user.first_name' && sortDirection === 'desc'}"></i>
                             </div>
-                        </div>
-                    @endforeach
-                </div>
-                <div class="mt-4 pt-4 border-t border-gray-200">
-                    <button class="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                        View All Departments
-                    </button>
-                </div>
-            </div>
-        </div>
-      <!-- Recent Activity -->
-        <div class="lg:col-span-2 bg-white rounded-lg shadow overflow-hidden slide-in">
-            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-                <div>
-                    <h3 class="text-lg font-medium text-gray-900">Recent Attendance Activity</h3>
-                    <p class="mt-1 text-sm text-gray-500">Latest check-ins and check-outs</p>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <select class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                        <option>Today</option>
-                        <option>Yesterday</option>
-                        <option>This Week</option>
-                        <option>This Month</option>
-                    </select>
-                    <button class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                        <i class="fas fa-download mr-2"></i> Export
-                    </button>
-                    <button class="px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                        <i class="fas fa-filter mr-2"></i> Filters
-                    </button>
-                </div>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($recentActivity as $attendance)
-                        <tr>
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition duration-150 ease-in-out" @click="sortAttendances('user.department')">
+                            <div class="flex items-center">
+                                Department
+                                <i class="fas fa-sort ml-1.5 text-gray-400" :class="{'fa-sort-up text-blue-500': sortColumn === 'user.department' && sortDirection === 'asc', 'fa-sort-down text-blue-500': sortColumn === 'user.department' && sortDirection === 'desc'}"></i>
+                            </div>
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time In/Out</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Hours</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition duration-150 ease-in-out" @click="sortAttendances('status')">
+                            <div class="flex items-center">
+                                Status
+                                <i class="fas fa-sort ml-1.5 text-gray-400" :class="{'fa-sort-up text-blue-500': sortColumn === 'status' && sortDirection === 'asc', 'fa-sort-down text-blue-500': sortColumn === 'status' && sortDirection === 'desc'}"></i>
+                            </div>
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    <template x-for="attendance in paginatedAttendances" :key="attendance.id">
+                        <tr class="hover:bg-gray-50 transition duration-150 ease-in-out">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="new Date(attendance.date).toLocaleDateString()"></td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0 h-10 w-10">
-                                        <img class="h-10 w-10 rounded-full" src="{{ $attendance->user->profile_photo_url }}" alt="">
+                                        <img class="h-10 w-10 rounded-full object-cover" 
+                                            :src="attendance.user.profile_photo_url" 
+                                            :alt="attendance.user.first_name + ' ' + attendance.user.last_name">
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">{{ $attendance->user->first_name }} {{ $attendance->user->last_name }}</div>
-                                        <div class="text-sm text-gray-500">{{ $attendance->user->email }}</div>
+                                        <div class="text-sm font-medium text-gray-900" x-text="attendance.user.first_name + ' ' + attendance.user.last_name"></div>
+                                        <div class="text-sm text-gray-500" x-text="attendance.user.employee_id"></div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $attendance->user->department }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                @if($attendance->time_in)
-                                    {{ \Carbon\Carbon::parse($attendance->time_in)->format('h:i A') }}
-                                @else
-                                    -
-                                @endif
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600" x-text="attendance.user.department"></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                <div x-show="attendance.time_in" class="flex items-center">
+                                    <i class="fas fa-sign-in-alt text-green-500 mr-2"></i>
+                                    <span x-text="attendance.time_in"></span>
+                                </div>
+                                <div x-show="attendance.time_out" class="flex items-center mt-1">
+                                    <i class="fas fa-sign-out-alt text-red-500 mr-2"></i>
+                                    <span x-text="attendance.time_out"></span>
+                                </div>
+                                <div x-show="!attendance.time_in && !attendance.time_out" class="text-gray-400">
+                                    N/A
+                                </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                @if($attendance->time_in && !$attendance->time_out)
-                                    Check-in
-                                @elseif($attendance->time_out)
-                                    Check-out
-                                @else
-                                    -
-                                @endif
-                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600" x-text="attendance.total_hours ? attendance.total_hours + ' hrs' : 'N/A'"></td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                @if($attendance->status === 'present')
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                        On Time
-                                    </span>
-                                @elseif($attendance->status === 'late')
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                        Late
-                                    </span>
-                                @elseif($attendance->status === 'absent')
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                        Absent
-                                    </span>
-                                @elseif($attendance->status === 'on_leave')
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                                        On Leave
-                                    </span>
-                                @elseif($attendance->status === 'half_day')
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-pink-100 text-pink-800">
-                                        Half Day
-                                    </span>
-                                @endif
+                                <span 
+                                    class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full" 
+                                    :class="{
+                                        'bg-green-50 text-green-700': attendance.status === 'present',
+                                        'bg-red-50 text-red-700': attendance.status === 'absent',
+                                        'bg-yellow-50 text-yellow-700': attendance.status === 'late',
+                                        'bg-blue-50 text-blue-700': attendance.status === 'on_leave',
+                                        'bg-purple-50 text-purple-700': attendance.status === 'half_day'
+                                    }"
+                                    x-text="attendance.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())"
+                                ></span>
+                                <div x-show="attendance.is_regularized" class="mt-1 text-xs text-gray-500 flex items-center">
+                                    <i class="fas fa-check-circle text-green-500 mr-1"></i>
+                                    Regularized
+                                </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <button class="text-indigo-600 hover:text-indigo-900" onclick="showAttendanceModal({{ $attendance->id }})">View</button>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex items-center space-x-3">
+                                    @can('attendance-view-details')
+                                    <button 
+                                        @click="viewAttendance(attendance.id)"
+                                        class="text-blue-500 hover:text-blue-700 transition duration-150 ease-in-out"
+                                        title="View"
+                                    >
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    @endcan
+                                    
+                                    @can('attendance-edit')
+                                    <button 
+                                        @click="editAttendance(attendance.id)"
+                                        class="text-yellow-500 hover:text-yellow-700 transition duration-150 ease-in-out"
+                                        title="Edit"
+                                    >
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    @endcan
+                                    
+                                    @can('attendance-delete')
+                                    <button 
+                                        @click="confirmDeleteAttendance(attendance.id)"
+                                        class="text-red-500 hover:text-red-700 transition duration-150 ease-in-out"
+                                        title="Delete"
+                                    >
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    @endcan
+                                </div>
                             </td>
                         </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            <div class="px-6 py-4 bg-gray-50 text-right">
-                <a href="{{ route('admin.attendance') }}" class="text-indigo-600 hover:text-indigo-900 font-medium">View All Activity</a>
-            </div>
-        </div>
-    </div>
-
-    
-    <!-- Detailed Attendance Records -->
-    <div class="bg-white rounded-lg shadow overflow-hidden slide-in mb-6">
-        <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-            <div>
-                <h3 class="text-lg font-medium text-gray-900">Staff Attendance Records</h3>
-                <p class="mt-1 text-sm text-gray-500">Detailed attendance for all staff members</p>
-            </div>
-            <div class="flex space-x-3">
-                <div class="relative">
-                    <input type="text" placeholder="Search staff..." class="border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <button class="absolute right-3 top-2 text-gray-400">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-                <select class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <option>All Departments</option>
-                    @foreach($departments as $dept)
-                        <option>{{ $dept->department }}</option>
-                    @endforeach
-                </select>
-            </div>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff ID</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Today</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">This Week</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">This Month</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach($staffAttendance as $staff)
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $staff->employee_id }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 h-10 w-10">
-                                    <img class="h-10 w-10 rounded-full" src="{{ $staff->profile_photo_url }}" alt="">
+                    </template>
+                    <template x-if="filteredAttendances.length === 0">
+                        <tr>
+                            <td colspan="7" class="px-6 py-8 text-center">
+                                <div class="flex flex-col items-center justify-center text-gray-400">
+                                    <i class="fas fa-calendar-times text-3xl mb-2"></i>
+                                    <p class="text-sm">No attendance records found matching your criteria.</p>
                                 </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ $staff->first_name }} {{ $staff->last_name }}</div>
-                                    <div class="text-sm text-gray-500">{{ $staff->email }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $staff->department }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $staff->getRoleAttribute() }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            @if($staff->todayAttendance)
-                                @if($staff->todayAttendance->status === 'present')
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                        Present
-                                    </span>
-                                @elseif($staff->todayAttendance->status === 'late')
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                        Late
-                                    </span>
-                                @elseif($staff->todayAttendance->status === 'absent')
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                        Absent
-                                    </span>
-                                @elseif($staff->todayAttendance->status === 'on_leave')
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                                        On Leave
-                                    </span>
-                                @elseif($staff->todayAttendance->status === 'half_day')
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-pink-100 text-pink-800">
-                                        Half Day
-                                    </span>
-                                @endif
-                            @else
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                    Not Recorded
-                                </span>
-                            @endif
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $staff->weeklyPresentCount }}/{{ $staff->workingDaysThisWeek }} days
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $staff->monthlyPresentCount }}/{{ $staff->workingDaysThisMonth }} days
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <button class="text-indigo-600 hover:text-indigo-900 mr-3" onclick="showAttendanceModal({{ $staff->id }}, 'user')">View</button>
-                            <button class="text-blue-600 hover:text-blue-900">Edit</button>
-                        </td>
-                    </tr>
-                    @endforeach
+                            </td>
+                        </tr>
+                    </template>
                 </tbody>
             </table>
         </div>
-        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+        <div class="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-100">
             <div class="flex-1 flex justify-between sm:hidden">
-                <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                <button 
+                    @click="currentPage = Math.max(1, currentPage - 1)"
+                    :disabled="currentPage === 1"
+                    :class="{'opacity-50 cursor-not-allowed': currentPage === 1}"
+                    class="relative inline-flex items-center px-4 py-2 border border-gray-200 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition duration-150 ease-in-out"
+                >
                     Previous
-                </a>
-                <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                </button>
+                <button 
+                    @click="currentPage = Math.min(totalPages, currentPage + 1)"
+                    :disabled="currentPage === totalPages"
+                    :class="{'opacity-50 cursor-not-allowed': currentPage === totalPages}"
+                    class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-200 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition duration-150 ease-in-out"
+                >
                     Next
-                </a>
+                </button>
             </div>
             <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
                     <p class="text-sm text-gray-700">
-                        Showing
-                        <span class="font-medium">{{ $staffAttendance->firstItem() }}</span>
-                        to
-                        <span class="font-medium">{{ $staffAttendance->lastItem() }}</span>
-                        of
-                        <span class="font-medium">{{ $staffAttendance->total() }}</span>
-                        results
+                        Showing <span class="font-medium" x-text="(currentPage - 1) * pageSize + 1"></span> to 
+                        <span class="font-medium" x-text="Math.min(currentPage * pageSize, filteredAttendances.length)"></span> of 
+                        <span class="font-medium" x-text="filteredAttendances.length"></span> records
                     </p>
                 </div>
                 <div>
-                    {{ $staffAttendance->links() }}
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        <button 
+                            @click="currentPage = 1"
+                            :disabled="currentPage === 1"
+                            :class="{'opacity-50 cursor-not-allowed': currentPage === 1}"
+                            class="relative inline-flex items-center px-2 py-2 rounded-l-lg border border-gray-200 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition duration-150 ease-in-out"
+                        >
+                            <span class="sr-only">First</span>
+                            <i class="fas fa-angle-double-left"></i>
+                        </button>
+                        <button 
+                            @click="currentPage = Math.max(1, currentPage - 1)"
+                            :disabled="currentPage === 1"
+                            :class="{'opacity-50 cursor-not-allowed': currentPage === 1}"
+                            class="relative inline-flex items-center px-2 py-2 border border-gray-200 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition duration-150 ease-in-out"
+                        >
+                            <span class="sr-only">Previous</span>
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <template x-for="page in visiblePages" :key="page">
+                            <button 
+                                @click="currentPage = page"
+                                :class="{'z-10 bg-blue-50 border-blue-300 text-blue-600': currentPage === page}"
+                                class="bg-white border-gray-200 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium transition duration-150 ease-in-out"
+                                x-text="page"
+                            ></button>
+                        </template>
+                        <button 
+                            @click="currentPage = Math.min(totalPages, currentPage + 1)"
+                            :disabled="currentPage === totalPages"
+                            :class="{'opacity-50 cursor-not-allowed': currentPage === totalPages}"
+                            class="relative inline-flex items-center px-2 py-2 border border-gray-200 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition duration-150 ease-in-out"
+                        >
+                            <span class="sr-only">Next</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <button 
+                            @click="currentPage = totalPages"
+                            :disabled="currentPage === totalPages"
+                            :class="{'opacity-50 cursor-not-allowed': currentPage === totalPages}"
+                            class="relative inline-flex items-center px-2 py-2 rounded-r-lg border border-gray-200 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition duration-150 ease-in-out"
+                        >
+                            <span class="sr-only">Last</span>
+                            <i class="fas fa-angle-double-right"></i>
+                        </button>
+                    </nav>
                 </div>
             </div>
         </div>
     </div>
 
-     <!-- Pending Requests -->
-    <div class="bg-white rounded-lg shadow overflow-hidden slide-in">
-        <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900">Pending Attendance Requests</h3>
-            <p class="mt-1 text-sm text-gray-500">Regularization and leave requests requiring approval</p>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Request ID</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach($pendingRequests as $request)
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">REQ-{{ $request->id }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 h-10 w-10">
-                                    <img class="h-10 w-10 rounded-full" src="{{ $request->user->profile_photo_url }}" alt="">
-                                </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ $request->user->first_name }} {{ $request->user->last_name }}</div>
-                                    <div class="text-sm text-gray-500">{{ $request->user->department }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $request->date->format('M d, Y') }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ucfirst($request->type) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ Str::limit($request->reason, 30) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                Pending
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <button class="text-green-600 hover:text-green-900 mr-3" onclick="approveRequest({{ $request->id }})">Approve</button>
-                            <button class="text-red-600 hover:text-red-900" onclick="rejectRequest({{ $request->id }})">Reject</button>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-        <div class="px-6 py-4 bg-gray-50 text-right">
-            <a href="{{ route('admin.leaves') }}" class="text-indigo-600 hover:text-indigo-900 font-medium">View All Requests</a>
-        </div>
-    </div>
-
-    <!-- Modal for Attendance Details -->
-    <div id="attendanceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-lg w-full max-w-2xl p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium">Attendance Details</h3>
-                <button id="closeAttendanceModal" class="text-gray-500 hover:text-gray-700">
+    <!-- Add/Edit Attendance Modal -->
+    <div 
+        x-show="isAttendanceModalOpen" 
+        @keydown.escape.window="closeAttendanceModal()"
+        @click.away="closeAttendanceModal()"
+        class="fixed inset-0 bg-gray-500 bg-opacity-75 overflow-y-auto h-full w-full z-50 transition-opacity duration-300 ease-in-out"
+        style="display: none;"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+    >
+        <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-xl rounded-xl bg-white" 
+             @click.stop
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <h3 class="text-xl font-semibold text-gray-900" x-text="isEditing ? 'Edit Attendance Record' : 'Add New Attendance Record'"></h3>
+                <button @click="closeAttendanceModal()" class="text-gray-400 hover:text-gray-500 transition duration-150 ease-in-out">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div id="modalContent" class="space-y-4">
-                <!-- Content will be loaded via AJAX -->
+            <div class="mt-4">
+                <form @submit.prevent="saveAttendance()">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Employee *</label>
+                            <select 
+                                x-model="currentAttendance.user_id"
+                                name="user_id"
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 bg-white transition duration-150 ease-in-out" 
+                                required
+                                :disabled="isEditing"
+                            >
+                                <option value="">Select Employee</option>
+                                @foreach($employees as $employee)
+                                    <option value="{{ $employee->id }}">{{ $employee->first_name }} {{ $employee->last_name }} ({{ $employee->employee_id }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                            <input 
+                                x-model="currentAttendance.date"
+                                name="date"
+                                type="date" 
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition duration-150 ease-in-out" 
+                                required
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Time In</label>
+                            <input 
+                                x-model="currentAttendance.time_in"
+                                name="time_in"
+                                type="time" 
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition duration-150 ease-in-out"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Time Out</label>
+                            <input 
+                                x-model="currentAttendance.time_out"
+                                name="time_out"
+                                type="time" 
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition duration-150 ease-in-out"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                            <select 
+                                x-model="currentAttendance.status"
+                                name="status"
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 bg-white transition duration-150 ease-in-out" 
+                                required
+                            >
+                                <option value="present">Present</option>
+                                <option value="absent">Absent</option>
+                                <option value="late">Late</option>
+                                <option value="on_leave">On Leave</option>
+                                <option value="half_day">Half Day</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Regularized</label>
+                            <select 
+                                x-model="currentAttendance.is_regularized"
+                                name="is_regularized"
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 bg-white transition duration-150 ease-in-out"
+                            >
+                                <option value="false">No</option>
+                                <option value="true">Yes</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2" x-show="currentAttendance.is_regularized === 'true'">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Regularization Reason</label>
+                            <textarea 
+                                x-model="currentAttendance.regularization_reason"
+                                name="regularization_reason"
+                                rows="2" 
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition duration-150 ease-in-out"
+                            ></textarea>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                            <textarea 
+                                x-model="currentAttendance.notes"
+                                name="notes"
+                                rows="2" 
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition duration-150 ease-in-out"
+                            ></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-end space-x-3 border-t border-gray-200 pt-4">
+                        <button 
+                            type="button" 
+                            @click="closeAttendanceModal()"
+                            class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            type="submit" 
+                            class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out"
+                        >
+                            <span x-text="isEditing ? 'Update Record' : 'Add Record'"></span>
+                        </button>
+                    </div>
+                </form>
             </div>
-            <div class="mt-6 flex justify-end space-x-3">
-                <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                    Close
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div 
+        x-show="isDeleteModalOpen" 
+        @keydown.escape.window="closeDeleteModal()"
+        @click.away="closeDeleteModal()"
+        class="fixed inset-0 bg-gray-500 bg-opacity-75 overflow-y-auto h-full w-full z-50 transition-opacity duration-300 ease-in-out"
+        style="display: none;"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+    >
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-xl rounded-xl bg-white" 
+             @click.stop
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <h3 class="text-xl font-semibold text-gray-900">Confirm Deletion</h3>
+                <button @click="closeDeleteModal()" class="text-gray-400 hover:text-gray-500 transition duration-150 ease-in-out">
+                    <i class="fas fa-times"></i>
                 </button>
-                <button id="editRecordBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                    Edit Record
+            </div>
+            <div class="mt-4">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="bg-red-100 p-3 rounded-full">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+                    </div>
+                </div>
+                <p class="text-gray-600 text-center">Are you sure you want to delete this attendance record? This action cannot be undone.</p>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3 border-t border-gray-200 pt-4">
+                <button 
+                    @click="closeDeleteModal()"
+                    class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out"
+                >
+                    Cancel
+                </button>
+                <button 
+                    @click="deleteAttendance()"
+                    class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150 ease-in-out"
+                >
+                    Delete Record
                 </button>
             </div>
         </div>
     </div>
 
+    <!-- View Attendance Modal -->
+    <div 
+        x-show="isViewModalOpen" 
+        @keydown.escape.window="closeViewModal()"
+        @click.away="closeViewModal()"
+        class="fixed inset-0 bg-gray-500 bg-opacity-75 overflow-y-auto h-full w-full z-50 transition-opacity duration-300 ease-in-out"
+        style="display: none;"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+    >
+        <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-xl rounded-xl bg-white" 
+             @click.stop
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <h3 class="text-xl font-semibold text-gray-900">Attendance Details</h3>
+                <button @click="closeViewModal()" class="text-gray-400 hover:text-gray-500 transition duration-150 ease-in-out">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mt-4">
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="md:w-1/3">
+                        <div class="bg-gray-50 p-6 rounded-lg text-center shadow-sm">
+                            <img 
+                                x-bind:src="viewAttendanceData.user.profile_photo_url || 'https://ui-avatars.com/api/?name=' + viewAttendanceData.user.first_name + '+' + viewAttendanceData.user.last_name + '&background=random'" 
+                                class="w-32 h-32 rounded-full mx-auto object-cover border-4 border-white shadow-md mb-4"
+                                alt="Profile Photo"
+                            >
+                            <h3 class="text-xl font-semibold" x-text="viewAttendanceData.user.first_name + ' ' + viewAttendanceData.user.last_name"></h3>
+                            <p class="text-gray-500" x-text="viewAttendanceData.user.employee_id"></p>
+                            <p class="text-gray-500" x-text="viewAttendanceData.user.department"></p>
+                        </div>
+                        
+                        <div class="mt-4 bg-gray-50 p-6 rounded-lg shadow-sm">
+                            <h4 class="font-medium text-gray-900 mb-3 border-b border-gray-200 pb-2 flex items-center">
+                                <i class="fas fa-info-circle mr-2 text-blue-500"></i>
+                                Attendance Summary
+                            </h4>
+                            <div class="space-y-3">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Date</p>
+                                    <p x-text="new Date(viewAttendanceData.date).toLocaleDateString()" class="text-sm text-gray-700"></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Status</p>
+                                    <span 
+                                        class="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium" 
+                                        :class="{
+                                            'bg-green-50 text-green-700': viewAttendanceData.status === 'present',
+                                            'bg-red-50 text-red-700': viewAttendanceData.status === 'absent',
+                                            'bg-yellow-50 text-yellow-700': viewAttendanceData.status === 'late',
+                                            'bg-blue-50 text-blue-700': viewAttendanceData.status === 'on_leave',
+                                            'bg-purple-50 text-purple-700': viewAttendanceData.status === 'half_day'
+                                        }"
+                                        x-text="viewAttendanceData.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())"
+                                    ></span>
+                                </div>
+                                <div x-show="viewAttendanceData.is_regularized">
+                                    <p class="text-sm font-medium text-gray-500">Regularized</p>
+                                    <p class="text-sm text-gray-700">Yes</p>
+                                </div>
+                                <div x-show="viewAttendanceData.regularized_by">
+                                    <p class="text-sm font-medium text-gray-500">Regularized By</p>
+                                    <p x-text="viewAttendanceData.regularized_by_user.first_name + ' ' + viewAttendanceData.regularized_by_user.last_name" class="text-sm text-gray-700"></p>
+                                </div>
+                                <div x-show="viewAttendanceData.regularized_at">
+                                    <p class="text-sm font-medium text-gray-500">Regularized At</p>
+                                    <p x-text="new Date(viewAttendanceData.regularized_at).toLocaleString()" class="text-sm text-gray-700"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="md:w-2/3">
+                        <div class="bg-gray-50 p-6 rounded-lg shadow-sm mb-4">
+                            <h4 class="font-medium text-gray-900 mb-3 border-b border-gray-200 pb-2 flex items-center">
+                                <i class="fas fa-clock mr-2 text-blue-500"></i>
+                                Time Details
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Time In</p>
+                                    <p x-text="viewAttendanceData.time_in || 'N/A'" class="text-sm text-gray-700"></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Time Out</p>
+                                    <p x-text="viewAttendanceData.time_out || 'N/A'" class="text-sm text-gray-700"></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Total Hours</p>
+                                    <p x-text="viewAttendanceData.total_hours ? viewAttendanceData.total_hours + ' hours' : 'N/A'" class="text-sm text-gray-700"></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-6 rounded-lg shadow-sm mb-4">
+                            <h4 class="font-medium text-gray-900 mb-3 border-b border-gray-200 pb-2 flex items-center">
+                                <i class="fas fa-sticky-note mr-2 text-blue-500"></i>
+                                Notes
+                            </h4>
+                            <p x-text="viewAttendanceData.notes || 'No notes available'" class="text-sm text-gray-700"></p>
+                        </div>
+                        
+                        <div x-show="viewAttendanceData.regularization_reason" class="bg-gray-50 p-6 rounded-lg shadow-sm">
+                            <h4 class="font-medium text-gray-900 mb-3 border-b border-gray-200 pb-2 flex items-center">
+                                <i class="fas fa-comment-alt mr-2 text-blue-500"></i>
+                                Regularization Reason
+                            </h4>
+                            <p x-text="viewAttendanceData.regularization_reason" class="text-sm text-gray-700"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end border-t border-gray-200 pt-4">
+                <button 
+                    @click="closeViewModal()"
+                    class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out"
+                >
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-    // Initialize animations
-    const animatedElements = document.querySelectorAll('.slide-in');
-    animatedElements.forEach((el, index) => {
-        setTimeout(() => {
-            el.classList.add('opacity-100');
-        }, index * 100);
-    });
+<script>
+    function attendanceModule() {
+        return {
+            // Data properties
+            attendances: @json($attendances->items()),
+            employees: @json($employees),
+            departments: @json($departments),
+            searchQuery: '',
+            selectedDepartment: '',
+            selectedEmployee: '',
+            selectedStatus: '',
+            startDate: '',
+            endDate: '',
+            sortColumn: 'date',
+            sortDirection: 'desc',
+            currentPage: 1,
+            pageSize: 20,
+            maxVisiblePages: 5,
+            
+            // Modal states
+            isAttendanceModalOpen: false,
+            isEditing: false,
+            isDeleteModalOpen: false,
+            isViewModalOpen: false,
+            attendanceToDelete: null,
+            
+            // Attendance data
+            currentAttendance: {
+                id: '',
+                user_id: '',
+                date: '',
+                time_in: '',
+                time_out: '',
+                status: 'present',
+                notes: '',
+                is_regularized: 'false',
+                regularization_reason: ''
+            },
+            
+            viewAttendanceData: {},
+            
+            // Computed properties
+            get filteredAttendances() {
+                let filtered = this.attendances;
+                
+                // Filter by search query
+                if (this.searchQuery) {
+                    const query = this.searchQuery.toLowerCase();
+                    filtered = filtered.filter(att => 
+                        att.user.first_name.toLowerCase().includes(query) || 
+                        att.user.last_name.toLowerCase().includes(query) ||
+                        att.user.employee_id.toLowerCase().includes(query) ||
+                        att.user.department.toLowerCase().includes(query)
+                    );
+                }
+                
+                // Filter by department
+                if (this.selectedDepartment) {
+                    filtered = filtered.filter(att => att.user.department === this.selectedDepartment);
+                }
+                
+                // Filter by employee
+                if (this.selectedEmployee) {
+                    filtered = filtered.filter(att => att.user_id == this.selectedEmployee);
+                }
+                
+                // Filter by status
+                if (this.selectedStatus) {
+                    filtered = filtered.filter(att => att.status === this.selectedStatus);
+                }
+                
+                // Filter by date range
+                if (this.startDate && this.endDate) {
+                    filtered = filtered.filter(att => {
+                        const date = new Date(att.date);
+                        return date >= new Date(this.startDate) && date <= new Date(this.endDate);
+                    });
+                }
+                
+                // Sort attendances
+                return filtered.sort((a, b) => {
+                    let aValue, bValue;
+                    
+                    if (this.sortColumn.includes('.')) {
+                        // Handle nested properties (e.g., user.first_name)
+                        const props = this.sortColumn.split('.');
+                        aValue = props.reduce((obj, prop) => obj && obj[prop], a);
+                        bValue = props.reduce((obj, prop) => obj && obj[prop], b);
+                    } else {
+                        aValue = a[this.sortColumn] || '';
+                        bValue = b[this.sortColumn] || '';
+                    }
+                    
+                    if (aValue < bValue) return this.sortDirection === 'asc' ? -1 : 1;
+                    if (aValue > bValue) return this.sortDirection === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            },
+            
+            get totalPages() {
+                return Math.ceil(this.filteredAttendances.length / this.pageSize);
+            },
+            
+            get visiblePages() {
+                const pages = [];
+                let startPage = Math.max(1, this.currentPage - Math.floor(this.maxVisiblePages / 2));
+                let endPage = Math.min(this.totalPages, startPage + this.maxVisiblePages - 1);
+                
+                if (endPage - startPage + 1 < this.maxVisiblePages) {
+                    startPage = Math.max(1, endPage - this.maxVisiblePages + 1);
+                }
+                
+                for (let i = startPage; i <= endPage; i++) {
+                    pages.push(i);
+                }
+                
+                return pages;
+            },
+            
+            get paginatedAttendances() {
+                const start = (this.currentPage - 1) * this.pageSize;
+                return this.filteredAttendances.slice(start, start + this.pageSize);
+            },
+            
+            // Methods
+            initDateRangePicker() {
+                const picker = $(this.$refs.dateRangePicker).daterangepicker({
+                    opens: 'left',
+                    autoUpdateInput: false,
+                    locale: {
+                        cancelLabel: 'Clear'
+                    }
+                });
 
-    // Close modal when clicking outside
-    document.addEventListener('click', function(e) {
-        if (e.target.id === 'attendanceModal') {
-            closeModal();
-        }
-    });
+                picker.on('apply.daterangepicker', (ev, picker) => {
+                    this.startDate = picker.startDate.format('YYYY-MM-DD');
+                    this.endDate = picker.endDate.format('YYYY-MM-DD');
+                    $(this.$refs.dateRangePicker).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format('MM/DD/YYYY'));
+                    this.filterAttendances();
+                });
 
-    // Close modal button
-    document.getElementById('closeAttendanceModal').addEventListener('click', closeModal);
-    });
+                picker.on('cancel.daterangepicker', () => {
+                    this.startDate = '';
+                    this.endDate = '';
+                    $(this.$refs.dateRangePicker).val('');
+                    this.filterAttendances();
+                });
+            },
+            
+            sortAttendances(column) {
+                if (this.sortColumn === column) {
+                    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    this.sortColumn = column;
+                    this.sortDirection = 'asc';
+                }
+            },
+            
+            openAddAttendanceModal() {
+                this.isEditing = false;
+                this.currentAttendance = {
+                    id: '',
+                    user_id: '',
+                    date: new Date().toISOString().split('T')[0],
+                    time_in: '',
+                    time_out: '',
+                    status: 'present',
+                    notes: '',
+                    is_regularized: 'false',
+                    regularization_reason: ''
+                };
+                this.isAttendanceModalOpen = true;
+                setTimeout(() => {
+                    const modal = document.querySelector('[x-show="isAttendanceModalOpen"]');
+                    if (modal) modal.style.display = 'block';
+                }, 50);
+            },
 
-    function showAttendanceModal(id, type = 'attendance') {
-    const modal = document.getElementById('attendanceModal');
-    const content = document.getElementById('modalContent');
-    const editBtn = document.getElementById('editRecordBtn');
-
-    // Show loading state
-    content.innerHTML = '<div class="flex justify-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-indigo-600"></i></div>';
-
-    // Fetch data via AJAX
-    fetch(`/admin/attendance/${id}/details?type=${type}`, {
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            content.innerHTML = data.html;
-            if (type === 'attendance') {
-                editBtn.onclick = function() { editAttendance(data.id); };
-                editBtn.style.display = 'inline-block';
-            } else {
-                editBtn.style.display = 'none';
+            editAttendance(id) {
+                const attendance = this.attendances.find(att => att.id === id);
+                if (attendance) {
+                    this.currentAttendance = {
+                        id: attendance.id,
+                        user_id: attendance.user_id,
+                        date: attendance.date,
+                        time_in: attendance.time_in,
+                        time_out: attendance.time_out,
+                        status: attendance.status,
+                        notes: attendance.notes,
+                        is_regularized: attendance.is_regularized ? 'true' : 'false',
+                        regularization_reason: attendance.regularization_reason
+                    };
+                    this.isEditing = true;
+                    this.isAttendanceModalOpen = true;
+                    setTimeout(() => {
+                        const modal = document.querySelector('[x-show="isAttendanceModalOpen"]');
+                        if (modal) modal.style.display = 'block';
+                    }, 50);
+                }
+            },
+            
+            viewAttendance(id) {
+                const attendance = this.attendances.find(att => att.id === id);
+                if (attendance) {
+                    this.viewAttendanceData = attendance;
+                    this.isViewModalOpen = true;
+                    setTimeout(() => {
+                        const modal = document.querySelector('[x-show="isViewModalOpen"]');
+                        if (modal) modal.style.display = 'block';
+                    }, 50);
+                }
+            },
+            
+            confirmDeleteAttendance(id) {
+                this.attendanceToDelete = id;
+                this.isDeleteModalOpen = true;
+                setTimeout(() => {
+                    const modal = document.querySelector('[x-show="isDeleteModalOpen"]');
+                    if (modal) modal.style.display = 'block';
+                }, 50);
+            },
+            
+            closeAttendanceModal() {
+                this.isAttendanceModalOpen = false;
+                const modal = document.querySelector('[x-show="isAttendanceModalOpen"]');
+                if (modal) modal.style.display = 'none';
+            },
+            
+            closeDeleteModal() {
+                this.isDeleteModalOpen = false;
+                this.attendanceToDelete = null;
+                const modal = document.querySelector('[x-show="isDeleteModalOpen"]');
+                if (modal) modal.style.display = 'none';
+            },
+            
+            closeViewModal() {
+                this.isViewModalOpen = false;
+                const modal = document.querySelector('[x-show="isViewModalOpen"]');
+                if (modal) modal.style.display = 'none';
+            },
+            
+            saveAttendance() {
+                const url = this.isEditing 
+                    ? "{{ route('admin.attendance.update', ['attendance' => ':id']) }}".replace(':id', this.currentAttendance.id)
+                    : "{{ route('admin.attendance.store') }}";
+                
+                const formData = new FormData();
+                formData.append('user_id', this.currentAttendance.user_id);
+                formData.append('date', this.currentAttendance.date);
+                formData.append('time_in', this.currentAttendance.time_in || '');
+                formData.append('time_out', this.currentAttendance.time_out || '');
+                formData.append('status', this.currentAttendance.status);
+                formData.append('notes', this.currentAttendance.notes || '');
+                formData.append('is_regularized', this.currentAttendance.is_regularized === 'true');
+                formData.append('regularization_reason', this.currentAttendance.regularization_reason || '');
+                
+                if (this.isEditing) {
+                    formData.append('_method', 'PUT');
+                }
+                
+                fetch(url, {
+                    method: this.isEditing ? 'POST' : 'POST', // Always POST, _method handles PUT
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (this.isEditing) {
+                            // Update existing attendance in the list
+                            const index = this.attendances.findIndex(att => att.id === data.attendance.id);
+                            if (index !== -1) {
+                                this.attendances[index] = data.attendance;
+                            }
+                        } else {
+                            // Add new attendance to the list
+                            this.attendances.unshift(data.attendance);
+                        }
+                        
+                        this.closeAttendanceModal();
+                        this.showToast(data.message);
+                    } else {
+                        throw new Error(data.message || 'Failed to save attendance record');
+                    }
+                })
+                .catch(error => {
+                    this.showToast(error.message, 'error');
+                    console.error('Error:', error);
+                });
+            },
+            
+            deleteAttendance() {
+                if (!this.attendanceToDelete) return;
+                
+                fetch("{{ route('admin.attendance.destroy', ['attendance' => ':id']) }}".replace(':id', this.attendanceToDelete), {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const index = this.attendances.findIndex(att => att.id === this.attendanceToDelete);
+                        if (index !== -1) {
+                            this.attendances.splice(index, 1);
+                        }
+                        this.showToast(data.message);
+                    } else {
+                        throw new Error(data.message || 'Failed to delete attendance record');
+                    }
+                })
+                .catch(error => {
+                    this.showToast(error.message, 'error');
+                    console.error('Error:', error);
+                })
+                .finally(() => {
+                    this.closeDeleteModal();
+                });
+            },
+            
+            showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg text-white flex items-center ${
+                    type === 'success' ? 'bg-green-500' : 'bg-red-500'
+                } z-50 transition-all duration-300 ease-in-out`;
+                
+                const icon = document.createElement('i');
+                icon.className = type === 'success' ? 'fas fa-check-circle mr-2' : 'fas fa-exclamation-circle mr-2';
+                toast.appendChild(icon);
+                
+                const text = document.createElement('span');
+                text.textContent = message;
+                toast.appendChild(text);
+                
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-y-2');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            },
+            
+            filterAttendances() {
+                // Reset to first page when filters change
+                this.currentPage = 1;
             }
-            modal.classList.remove('hidden');
-        } else {
-            showToast(data.message || 'Failed to load details', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('Failed to load attendance details', 'error');
-    });
-}
-
-
-    function closeModal() {
-    document.getElementById('attendanceModal').classList.add('hidden');
+        };
     }
+</script>
+@endpush
 
-    function approveRequest(requestId) {
-    fetch(`/admin/attendance/requests/${requestId}/approve`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast('Request approved successfully', 'success');
-            document.querySelector(`tr[data-request="${requestId}"]`).remove();
-        } else {
-            showToast(data.message, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('Failed to approve request', 'error');
-    });
-    }
+@push('styles')
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+@endpush
 
-    function rejectRequest(requestId) {
-    fetch(`/admin/attendance/requests/${requestId}/reject`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast('Request rejected', 'error');
-            document.querySelector(`tr[data-request="${requestId}"]`).remove();
-        } else {
-            showToast(data.message, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('Failed to reject request', 'error');
-    });
-    }
-
-    function editAttendance(id) {
-    // In a real app, this would open an edit form
-    showToast('Edit mode activated for record #' + id, 'info');
-    }
-
-    function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `fixed top-4 right-4 px-4 py-2 rounded-md shadow-md text-white ${
-        type === 'success' ? 'bg-green-500' : 
-        type === 'error' ? 'bg-red-500' : 
-        'bg-blue-500'
-    } z-50`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-
-    setTimeout(() => {
-        toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-    }
-    </script>
+@push('scripts')
+<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 @endpush
 @endsection
