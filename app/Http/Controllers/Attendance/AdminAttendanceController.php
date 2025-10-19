@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Stevebauman\Location\Facades\Location;
 
 class AdminAttendanceController extends Controller
 {
@@ -21,7 +22,7 @@ class AdminAttendanceController extends Controller
 
     public function index(Request $request)
     {
-        $query = Attendance::with('user')
+        $query = Attendance::with(['user', 'regularizedBy'])
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc');
 
@@ -79,6 +80,9 @@ class AdminAttendanceController extends Controller
             'time_out' => 'nullable|date_format:H:i|after:time_in',
             'status' => 'required|in:present,absent,late,on_leave,half_day',
             'notes' => 'nullable|string|max:500',
+            'biometric_id' => 'nullable|string|max:255',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
         if ($validator->fails()) {
@@ -86,6 +90,13 @@ class AdminAttendanceController extends Controller
                 'success' => false,
                 'errors' => $validator->errors()
             ], 422);
+        }
+
+        // Get location from coordinates if provided
+        $location = null;
+        if ($request->latitude && $request->longitude) {
+            $position = Location::get($request->ip());
+            $location = $position ? $position->cityName . ', ' . $position->countryName : null;
         }
 
         // Calculate total hours if both time_in and time_out are provided
@@ -106,6 +117,10 @@ class AdminAttendanceController extends Controller
             'notes' => $request->notes,
             'ip_address' => $request->ip(),
             'device_info' => $request->header('User-Agent'),
+            'location' => $location,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'biometric_id' => $request->biometric_id,
         ]);
 
         return response()->json([
@@ -117,7 +132,6 @@ class AdminAttendanceController extends Controller
 
     public function update(Request $request, Attendance $attendance)
     {
-        // Check if user has permission to edit this attendance
         if (auth()->user()->hasRole('Department Head') && 
             $attendance->user->department !== auth()->user()->department) {
             return response()->json([
@@ -134,6 +148,7 @@ class AdminAttendanceController extends Controller
             'notes' => 'nullable|string|max:500',
             'is_regularized' => 'sometimes|boolean',
             'regularization_reason' => 'required_if:is_regularized,true|string|max:500',
+            'biometric_id' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -143,9 +158,8 @@ class AdminAttendanceController extends Controller
             ], 422);
         }
 
-        $data = $request->only(['date', 'time_in', 'time_out', 'status', 'notes', 'is_regularized', 'regularization_reason']);
+        $data = $request->only(['date', 'time_in', 'time_out', 'status', 'notes', 'is_regularized', 'regularization_reason', 'biometric_id']);
 
-        // Calculate total hours if both time_in and time_out are provided
         if ($request->has('time_in') || $request->has('time_out')) {
             $timeIn = $request->time_in ?? $attendance->time_in;
             $timeOut = $request->time_out ?? $attendance->time_out;
@@ -175,7 +189,6 @@ class AdminAttendanceController extends Controller
 
     public function destroy(Attendance $attendance)
     {
-        // Check if user has permission to delete this attendance
         if (auth()->user()->hasRole('Department Head') && 
             $attendance->user->department !== auth()->user()->department) {
             return response()->json([
@@ -321,7 +334,9 @@ class AdminAttendanceController extends Controller
                 'Status',
                 'Notes',
                 'Regularized',
-                'Regularized Reason'
+                'Regularized Reason',
+                'Biometric ID',
+                'Location'
             ]);
 
             // Data rows
@@ -337,7 +352,9 @@ class AdminAttendanceController extends Controller
                     ucfirst(str_replace('_', ' ', $attendance->status)),
                     $attendance->notes,
                     $attendance->is_regularized ? 'Yes' : 'No',
-                    $attendance->regularization_reason
+                    $attendance->regularization_reason,
+                    $attendance->biometric_id,
+                    $attendance->location
                 ]);
             }
 

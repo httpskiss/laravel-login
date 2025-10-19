@@ -1,649 +1,791 @@
-@extends('layouts.employee')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIPSU HRMIS - Attendance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" href="favicon.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <style>
+        .sidebar {
+            transition: all 0.3s ease;
+            width: 250px;
+        }
+        
+        .sidebar.collapsed {
+            width: 70px;
+        }
+        
+        .sidebar.collapsed .nav-text,
+        .sidebar.collapsed .logo-text {
+            display: none;
+        }
+        
+        .main-content {
+            transition: all 0.3s ease;
+            margin-left: 250px;
+            width: calc(100% - 250px);
+        }
+        
+        .sidebar.collapsed ~ .main-content {
+            margin-left: 70px;
+            width: calc(100% - 70px);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                z-index: 50;
+                height: 100vh;
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .sidebar.collapsed ~ .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+        
+        /* Prevent logo from squishing */
+        .sidebar-logo {
+            min-width: 40px;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar.collapsed .sidebar-logo {
+            min-width: 40px;
+            padding: 0.5rem;
+        }
+        
+        .sidebar-logo-container {
+            width: 180px;
+            overflow: hidden;
+        }
+        
+        .sidebar.collapsed .sidebar-logo-container {
+            width: 40px;
+        }
+        
+        /* Ensure smooth transition */
+        .sidebar-logo-container img {
+            transition: all 0.3s ease;
+        }
+        
+        /* Adjust logo size in collapsed state */
+        .sidebar.collapsed .sidebar-logo-container img {
+            height: 36px;
+            width: auto;
+        }
+        
+        /* Mobile adjustments */
+        @media (max-width: 768px) {
+            .sidebar-logo-container {
+                width: 180px;
+            }
+            
+            .sidebar.mobile-open .sidebar-logo-container {
+                width: 180px;
+            }
+        }
+        
+        /* Custom styles for attendance module */
+        .biometric-container {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .fingerprint-scan {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+        }
+        
+        .attendance-status {
+            transition: all 0.3s ease;
+        }
+        
+        .time-in-out-btn {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .time-in-out-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .attendance-record:hover {
+            background-color: #f8fafc;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Mobile menu button (hidden on desktop) -->
+        <button id="mobileMenuBtn" class="md:hidden fixed top-4 left-4 z-50 p-2 bg-blue-800 text-white rounded-lg">
+            <i class="fas fa-bars"></i>
+        </button>
 
-@section('title', 'My Attendance')
-
-@section('content')
-
-<div class="flex flex-col h-full" x-data="employeeAttendanceModule()" x-cloak>
-    <!-- Error Messages -->
-    @if ($errors->any())
-        <div class="bg-red-50 border-l-4 border-red-400 text-red-700 p-4 mb-6 rounded-md shadow-sm" role="alert">
-            <div class="flex items-center">
-                <i class="fas fa-exclamation-circle mr-2"></i>
-                <strong class="font-medium">Please fix these errors:</strong>
-            </div>
-            <ul class="mt-2 list-disc list-inside text-sm">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <!-- Today's Attendance Card -->
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-6 border border-gray-100">
-        <div class="px-6 py-4 border-b border-gray-100">
-            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                <i class="fas fa-calendar-day mr-2 text-blue-500"></i>
-                Today's Attendance - {{ now()->format('l, F j, Y') }}
-            </h3>
-        </div>
-        <div class="p-6">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="mb-4 md:mb-0">
-                    <div class="flex items-center mb-2">
-                        <span class="text-sm font-medium text-gray-500 mr-3">Status:</span>
-                        <span 
-                            class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full" 
-                            :class="{
-                                'bg-green-50 text-green-700': todayAttendance && todayAttendance.status === 'present',
-                                'bg-red-50 text-red-700': todayAttendance && todayAttendance.status === 'absent',
-                                'bg-yellow-50 text-yellow-700': todayAttendance && todayAttendance.status === 'late',
-                                'bg-blue-50 text-blue-700': todayAttendance && todayAttendance.status === 'on_leave',
-                                'bg-purple-50 text-purple-700': todayAttendance && todayAttendance.status === 'half_day',
-                                'bg-gray-50 text-gray-700': !todayAttendance
-                            }"
-                            x-text="todayAttendance ? todayAttendance.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Not Recorded'"
-                        ></span>
-                    </div>
-                    <div class="flex items-center">
-                        <span class="text-sm font-medium text-gray-500 mr-3">Time In:</span>
-                        <span x-text="todayAttendance && todayAttendance.time_in ? todayAttendance.time_in : '--:--'" class="text-sm text-gray-700"></span>
-                    </div>
-                    <div class="flex items-center mt-1">
-                        <span class="text-sm font-medium text-gray-500 mr-3">Time Out:</span>
-                        <span x-text="todayAttendance && todayAttendance.time_out ? todayAttendance.time_out : '--:--'" class="text-sm text-gray-700"></span>
-                    </div>
-                </div>
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <button 
-                        @click="checkInOut('check-in')"
-                        :disabled="todayAttendance && todayAttendance.time_in"
-                        :class="{'opacity-50 cursor-not-allowed': todayAttendance && todayAttendance.time_in}"
-                        class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out"
-                    >
-                        <i class="fas fa-sign-in-alt mr-2"></i> Check In
-                    </button>
-                    <button 
-                        @click="checkInOut('check-out')"
-                        :disabled="!todayAttendance || !todayAttendance.time_in || todayAttendance.time_out"
-                        :class="{'opacity-50 cursor-not-allowed': !todayAttendance || !todayAttendance.time_in || todayAttendance.time_out}"
-                        class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150 ease-in-out"
-                    >
-                        <i class="fas fa-sign-out-alt mr-2"></i> Check Out
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Attendance Actions -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div class="w-full md:w-auto">
-            <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i class="fas fa-search text-gray-400"></i>
-                </div>
-                <input 
-                    x-model="searchQuery" 
-                    @input="filterAttendances()"
-                    type="text" 
-                    class="block w-full md:w-64 pl-10 pr-3 py-2 border border-gray-200 rounded-lg leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition duration-150 ease-in-out" 
-                    placeholder="Search attendance..."
-                >
-            </div>
-        </div>
-        <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-            <div class="relative">
-                <input 
-                    x-ref="dateRangePicker"
-                    type="text" 
-                    class="block w-full md:w-48 pl-3 pr-10 py-2 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 bg-white transition duration-150 ease-in-out" 
-                    placeholder="Select date range"
-                    readonly
-                >
-                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <i class="fas fa-calendar text-gray-400"></i>
-                </div>
-            </div>
-            <select 
-                x-model="selectedStatus" 
-                @change="filterAttendances()"
-                class="block w-full md:w-40 pl-3 pr-10 py-2 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 bg-white transition duration-150 ease-in-out"
-            >
-                <option value="">All Status</option>
-                <option value="present">Present</option>
-                <option value="absent">Absent</option>
-                <option value="late">Late</option>
-                <option value="on_leave">On Leave</option>
-                <option value="half_day">Half Day</option>
-            </select>
-            <button 
-                @click="openRegularizationModal()"
-                class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md transition duration-150 ease-in-out"
-            >
-                <i class="fas fa-edit mr-2"></i> Request Regularization
-            </button>
-        </div>
-    </div>
-
-    <!-- Attendance List -->
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-6 border border-gray-100">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-100">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition duration-150 ease-in-out" @click="sortAttendances('date')">
-                            <div class="flex items-center">
-                                Date
-                                <i class="fas fa-sort ml-1.5 text-gray-400" :class="{'fa-sort-up text-blue-500': sortColumn === 'date' && sortDirection === 'asc', 'fa-sort-down text-blue-500': sortColumn === 'date' && sortDirection === 'desc'}"></i>
-                            </div>
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time In/Out</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Hours</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition duration-150 ease-in-out" @click="sortAttendances('status')">
-                            <div class="flex items-center">
-                                Status
-                                <i class="fas fa-sort ml-1.5 text-gray-400" :class="{'fa-sort-up text-blue-500': sortColumn === 'status' && sortDirection === 'asc', 'fa-sort-down text-blue-500': sortColumn === 'status' && sortDirection === 'desc'}"></i>
-                            </div>
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-100">
-                    <template x-for="attendance in paginatedAttendances" :key="attendance.id">
-                        <tr class="hover:bg-gray-50 transition duration-150 ease-in-out">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="new Date(attendance.date).toLocaleDateString()"></td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                <div x-show="attendance.time_in" class="flex items-center">
-                                    <i class="fas fa-sign-in-alt text-green-500 mr-2"></i>
-                                    <span x-text="attendance.time_in"></span>
-                                </div>
-                                <div x-show="attendance.time_out" class="flex items-center mt-1">
-                                    <i class="fas fa-sign-out-alt text-red-500 mr-2"></i>
-                                    <span x-text="attendance.time_out"></span>
-                                </div>
-                                <div x-show="!attendance.time_in && !attendance.time_out" class="text-gray-400">
-                                    N/A
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600" x-text="attendance.total_hours ? attendance.total_hours + ' hrs' : 'N/A'"></td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span 
-                                    class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full" 
-                                    :class="{
-                                        'bg-green-50 text-green-700': attendance.status === 'present',
-                                        'bg-red-50 text-red-700': attendance.status === 'absent',
-                                        'bg-yellow-50 text-yellow-700': attendance.status === 'late',
-                                        'bg-blue-50 text-blue-700': attendance.status === 'on_leave',
-                                        'bg-purple-50 text-purple-700': attendance.status === 'half_day'
-                                    }"
-                                    x-text="attendance.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())"
-                                ></span>
-                                <div x-show="attendance.is_regularized" class="mt-1 text-xs text-gray-500 flex items-center">
-                                    <i class="fas fa-check-circle text-green-500 mr-1"></i>
-                                    Regularized
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-600" x-text="attendance.notes || '--'"></td>
-                        </tr>
-                    </template>
-                    <template x-if="filteredAttendances.length === 0">
-                        <tr>
-                            <td colspan="5" class="px-6 py-8 text-center">
-                                <div class="flex flex-col items-center justify-center text-gray-400">
-                                    <i class="fas fa-calendar-times text-3xl mb-2"></i>
-                                    <p class="text-sm">No attendance records found matching your criteria.</p>
-                                </div>
-                            </td>
-                        </tr>
-                    </template>
-                </tbody>
-            </table>
-        </div>
-        <div class="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-100">
-            <div class="flex-1 flex justify-between sm:hidden">
-                <button 
-                    @click="currentPage = Math.max(1, currentPage - 1)"
-                    :disabled="currentPage === 1"
-                    :class="{'opacity-50 cursor-not-allowed': currentPage === 1}"
-                    class="relative inline-flex items-center px-4 py-2 border border-gray-200 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition duration-150 ease-in-out"
-                >
-                    Previous
-                </button>
-                <button 
-                    @click="currentPage = Math.min(totalPages, currentPage + 1)"
-                    :disabled="currentPage === totalPages"
-                    :class="{'opacity-50 cursor-not-allowed': currentPage === totalPages}"
-                    class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-200 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition duration-150 ease-in-out"
-                >
-                    Next
-                </button>
-            </div>
-            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                    <p class="text-sm text-gray-700">
-                        Showing <span class="font-medium" x-text="(currentPage - 1) * pageSize + 1"></span> to 
-                        <span class="font-medium" x-text="Math.min(currentPage * pageSize, filteredAttendances.length)"></span> of 
-                        <span class="font-medium" x-text="filteredAttendances.length"></span> records
-                    </p>
-                </div>
-                <div>
-                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                        <button 
-                            @click="currentPage = 1"
-                            :disabled="currentPage === 1"
-                            :class="{'opacity-50 cursor-not-allowed': currentPage === 1}"
-                            class="relative inline-flex items-center px-2 py-2 rounded-l-lg border border-gray-200 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition duration-150 ease-in-out"
-                        >
-                            <span class="sr-only">First</span>
-                            <i class="fas fa-angle-double-left"></i>
-                        </button>
-                        <button 
-                            @click="currentPage = Math.max(1, currentPage - 1)"
-                            :disabled="currentPage === 1"
-                            :class="{'opacity-50 cursor-not-allowed': currentPage === 1}"
-                            class="relative inline-flex items-center px-2 py-2 border border-gray-200 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition duration-150 ease-in-out"
-                        >
-                            <span class="sr-only">Previous</span>
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <template x-for="page in visiblePages" :key="page">
-                            <button 
-                                @click="currentPage = page"
-                                :class="{'z-10 bg-blue-50 border-blue-300 text-blue-600': currentPage === page}"
-                                class="bg-white border-gray-200 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium transition duration-150 ease-in-out"
-                                x-text="page"
-                            ></button>
-                        </template>
-                        <button 
-                            @click="currentPage = Math.min(totalPages, currentPage + 1)"
-                            :disabled="currentPage === totalPages"
-                            :class="{'opacity-50 cursor-not-allowed': currentPage === totalPages}"
-                            class="relative inline-flex items-center px-2 py-2 border border-gray-200 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition duration-150 ease-in-out"
-                        >
-                            <span class="sr-only">Next</span>
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                        <button 
-                            @click="currentPage = totalPages"
-                            :disabled="currentPage === totalPages"
-                            :class="{'opacity-50 cursor-not-allowed': currentPage === totalPages}"
-                            class="relative inline-flex items-center px-2 py-2 rounded-r-lg border border-gray-200 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition duration-150 ease-in-out"
-                        >
-                            <span class="sr-only">Last</span>
-                            <i class="fas fa-angle-double-right"></i>
-                        </button>
-                    </nav>
+        <div id="sidebar" class="sidebar bg-blue-800 text-white fixed h-full overflow-y-auto">
+            <div class="p-4 flex items-center">
+                <div class="flex items-center space-x-3">
+                    <img src="assets/images/uni_logo.png" alt="BIPSU Logo"
+                         class="h-12 w-auto object-contain max-w-full transition-all duration-300">
+                    <span class="logo-text text-xl font-bold whitespace-nowrap">eHRMIS</span>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Regularization Modal -->
-    <div 
-        x-show="isRegularizationModalOpen" 
-        @keydown.escape.window="closeRegularizationModal()"
-        @click.away="closeRegularizationModal()"
-        class="fixed inset-0 bg-gray-500 bg-opacity-75 overflow-y-auto h-full w-full z-50 transition-opacity duration-300 ease-in-out"
-        style="display: none;"
-        x-transition:enter="ease-out duration-300"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="ease-in duration-200"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-    >
-        <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-xl rounded-xl bg-white" 
-             @click.stop
-             x-transition:enter="ease-out duration-300"
-             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-             x-transition:leave="ease-in duration-200"
-             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
-                <h3 class="text-xl font-semibold text-gray-900">Request Attendance Regularization</h3>
-                <button @click="closeRegularizationModal()" class="text-gray-400 hover:text-gray-500 transition duration-150 ease-in-out">
-                    <i class="fas fa-times"></i>
+            <nav class="mt-6">
+                <div class="px-4 py-2">
+                    <a href="dashboard.html" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-tachometer-alt mr-3"></i>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                </div>
+                <div class="px-4 py-2">
+                    <a href="employees.html" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-users mr-3"></i>
+                        <span class="nav-text">Employees</span>
+                    </a>
+                </div>
+                <div class="px-4 py-2">
+                    <a href="attendance.html" class="flex items-center px-4 py-3 rounded-lg bg-blue-900">
+                        <i class="fas fa-calendar-alt mr-3"></i>
+                        <span class="nav-text">Attendance</span>
+                    </a>
+                </div>
+                <div class="px-4 py-2">
+                    <a href="payroll.html" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-money-bill-wave mr-3"></i>
+                        <span class="nav-text">Payroll</span>
+                    </a>
+                </div>
+                <div class="px-4 py-2">
+                    <a href="leave.html" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-calendar-minus mr-3"></i>
+                        <span class="nav-text">Leave</span>
+                    </a>
+                </div>
+                <div class="px-4 py-2">
+                    <a href="travel.html" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-plane mr-3"></i>
+                        <span class="nav-text">Travel</span>
+                    </a>
+                </div>
+                <div class="px-4 py-2">
+                    <a href="reports.html" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-chart-line mr-3"></i>
+                        <span class="nav-text">Reports</span>
+                    </a>
+                </div>
+                <div class="px-4 py-2">
+                    <a href="settings.html" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-cog mr-3"></i>
+                        <span class="nav-text">Settings</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="p-4">
+                <button id="toggleSidebar" class="w-full flex items-center justify-center py-2 bg-blue-700 rounded-lg">
+                    <i class="fas fa-chevron-left"></i>
+                    <span class="nav-text ml-2">Collapse</span>
                 </button>
             </div>
-            <div class="mt-4">
-                <form @submit.prevent="submitRegularization()">
-                    <div class="grid grid-cols-1 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
-                            <input 
-                                x-model="regularizationData.date"
-                                name="date"
-                                type="date" 
-                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition duration-150 ease-in-out" 
-                                required
-                            >
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Time In *</label>
-                                <input 
-                                    x-model="regularizationData.time_in"
-                                    name="time_in"
-                                    type="time" 
-                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition duration-150 ease-in-out"
-                                    required
-                                >
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Time Out *</label>
-                                <input 
-                                    x-model="regularizationData.time_out"
-                                    name="time_out"
-                                    type="time" 
-                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition duration-150 ease-in-out"
-                                    required
-                                >
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Reason *</label>
-                            <textarea 
-                                x-model="regularizationData.reason"
-                                name="reason"
-                                rows="3" 
-                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition duration-150 ease-in-out"
-                                required
-                                placeholder="Explain why you need to regularize this attendance"
-                            ></textarea>
-                        </div>
-                    </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content flex-1 overflow-auto">
+            <header class="bg-white shadow-sm">
+                <div class="flex justify-between items-center p-4">
+                    <h1 class="text-2xl font-semibold text-gray-800">Attendance Management</h1>
                     
-                    <div class="mt-6 flex justify-end space-x-3 border-t border-gray-200 pt-4">
-                        <button 
-                            type="button" 
-                            @click="closeRegularizationModal()"
-                            class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out"
-                        >
-                            Cancel
-                        </button>
-                        <button 
-                            type="submit" 
-                            class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out"
-                        >
-                            Submit Request
-                        </button>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <button class="p-2 text-gray-600 hover:text-blue-600 relative">
+                                <i class="fas fa-bell text-xl"></i>
+                                <span class="notification-counter absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">3</span>
+                            </button>
+                        </div>
+                        <div class="dropdown relative">
+                            <div class="flex items-center cursor-pointer">
+                                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile" class="w-8 h-8 rounded-full">
+                                <span class="ml-2 text-gray-700">
+                                    John Doe
+                                </span>
+                                <i class="fas fa-chevron-down ml-1 text-gray-600 text-xs"></i>
+                            </div>
+                            <div class="dropdown-menu absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden">
+                                <a href="profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                                <a href="settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
+                                <div class="border-t border-gray-200"></div>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                                </a>
+                            </div>
+                        </div>
                     </div>
-                </form>
-            </div>
+                </div>
+            </header>
+            <main class="p-6">
+                <!-- Success/Error Messages -->
+                <div id="successMessage" class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 hidden" role="alert">
+                    <p id="successMessageText"></p>
+                </div>
+                <div id="errorMessage" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 hidden" role="alert">
+                    <p id="errorMessageText"></p>
+                </div>
+
+                <!-- Attendance Overview Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Today's Date</p>
+                                <h3 class="text-2xl font-bold" id="currentDate">Loading...</h3>
+                            </div>
+                            <div class="bg-blue-100 p-3 rounded-full">
+                                <i class="fas fa-calendar-day text-blue-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Current Time</p>
+                                <h3 class="text-2xl font-bold" id="currentTime">Loading...</h3>
+                            </div>
+                            <div class="bg-green-100 p-3 rounded-full">
+                                <i class="fas fa-clock text-green-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Today's Status</p>
+                                <h3 class="text-2xl font-bold" id="attendanceStatus">-</h3>
+                            </div>
+                            <div class="bg-yellow-100 p-3 rounded-full">
+                                <i class="fas fa-user-check text-yellow-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Monthly Attendance</p>
+                                <h3 class="text-2xl font-bold">18/22</h3>
+                            </div>
+                            <div class="bg-purple-100 p-3 rounded-full">
+                                <i class="fas fa-calendar-check text-purple-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Biometric and Manual Attendance Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- Biometric Attendance -->
+                    <div class="lg:col-span-1">
+                        <div class="biometric-container text-white rounded-lg shadow p-6 h-full">
+                            <h2 class="text-xl font-bold mb-4">Biometric Attendance</h2>
+                            <div class="flex flex-col items-center justify-center py-8">
+                                <div class="relative mb-6">
+                                    <div class="fingerprint-scan bg-blue-600 rounded-full p-8">
+                                        <i class="fas fa-fingerprint text-5xl"></i>
+                                    </div>
+                                    <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-white text-blue-800 px-3 py-1 rounded-full text-xs font-semibold shadow">
+                                        Ready to Scan
+                                    </div>
+                                </div>
+                                <p class="text-center mb-6">Place your finger on the scanner to record your attendance</p>
+                                <button id="scanFingerprintBtn" class="bg-white text-blue-800 font-semibold py-2 px-6 rounded-full hover:bg-blue-100 transition-colors">
+                                    Start Scanning
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manual Attendance -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-lg shadow p-6 h-full">
+                            <h2 class="text-xl font-bold mb-4">Manual Attendance</h2>
+                            <div class="flex flex-col md:flex-row gap-4 mb-6">
+                                <div class="flex-1">
+                                    <label for="attendanceType" class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                                    <select id="attendanceType" class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="time_in">Time In</option>
+                                        <option value="time_out">Time Out</option>
+                                    </select>
+                                </div>
+                                <div class="flex-1">
+                                    <label for="attendanceDate" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                                    <input type="date" id="attendanceDate" class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div class="flex-1">
+                                    <label for="attendanceTime" class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                                    <input type="time" id="attendanceTime" class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                            </div>
+                            <div class="flex flex-col md:flex-row gap-4">
+                                <div class="flex-1">
+                                    <label for="attendanceRemarks" class="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
+                                    <textarea id="attendanceRemarks" rows="2" class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Optional remarks"></textarea>
+                                </div>
+                                <div class="flex items-end">
+                                    <button id="submitManualAttendanceBtn" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-blue-700 transition-colors h-12">
+                                        Submit Attendance
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <button id="timeInBtn" class="time-in-out-btn bg-green-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-green-700 flex items-center justify-center">
+                        <i class="fas fa-sign-in-alt mr-2"></i> Time In
+                    </button>
+                    <button id="timeOutBtn" class="time-in-out-btn bg-red-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-red-700 flex items-center justify-center">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Time Out
+                    </button>
+                    <button id="breakStartBtn" class="time-in-out-btn bg-yellow-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-yellow-700 flex items-center justify-center">
+                        <i class="fas fa-coffee mr-2"></i> Start Break
+                    </button>
+                    <button id="breakEndBtn" class="time-in-out-btn bg-purple-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-purple-700 flex items-center justify-center">
+                        <i class="fas fa-coffee mr-2"></i> End Break
+                    </button>
+                </div>
+
+                <!-- Attendance Records -->
+                <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h2 class="text-xl font-bold">Recent Attendance Records</h2>
+                        <div class="flex space-x-2">
+                            <select id="recordFilter" class="border border-gray-300 rounded-md py-1 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="all">All Records</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                            <button class="bg-blue-600 text-white text-sm font-semibold py-1 px-3 rounded-md hover:bg-blue-700">
+                                <i class="fas fa-download mr-1"></i> Export
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time In</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Out</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Hours</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceRecords" class="bg-white divide-y divide-gray-200">
+                                <!-- Records will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-6 py-4 border-t border-gray-200 flex justify-between items-center">
+                        <div class="text-sm text-gray-500">
+                            Showing <span id="startRecord">1</span> to <span id="endRecord">10</span> of <span id="totalRecords">24</span> records
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="prevPageBtn" class="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50" disabled>
+                                Previous
+                            </button>
+                            <button id="nextPageBtn" class="px-3 py-1 border border-gray-300 rounded-md text-sm">
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
     </div>
-</div>
 
-@push('scripts')
-<script>
-    function employeeAttendanceModule() {
-        return {
-            // Data properties
-            attendances: @json($attendances->items()),
-            todayAttendance: @json($todayAttendance),
-            searchQuery: '',
-            startDate: '',
-            endDate: '',
-            selectedStatus: '',
-            sortColumn: 'date',
-            sortDirection: 'desc',
-            currentPage: 1,
-            pageSize: 10,
-            maxVisiblePages: 5,
-            
-            // Modal state
-            isRegularizationModalOpen: false,
-            regularizationData: {
-                date: '',
-                time_in: '',
-                time_out: '',
-                reason: ''
-            },
-            
-            // Computed properties
-            get filteredAttendances() {
-                let filtered = this.attendances;
-                
-                // Filter by search query
-                if (this.searchQuery) {
-                    const query = this.searchQuery.toLowerCase();
-                    filtered = filtered.filter(att => 
-                        att.date.toLowerCase().includes(query) || 
-                        att.status.toLowerCase().includes(query) ||
-                        (att.time_in && att.time_in.toLowerCase().includes(query)) ||
-                        (att.time_out && att.time_out.toLowerCase().includes(query))
-                    );
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle profile dropdown toggle
+            const dropdown = document.querySelector('.dropdown');
+            if (dropdown) {
+                dropdown.addEventListener('click', function(e) {
+                    if (e.target.closest('.dropdown-menu')) return;
+                    this.querySelector('.dropdown-menu').classList.toggle('hidden');
+                });
+            }
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.dropdown')) {
+                    const openDropdown = document.querySelector('.dropdown-menu:not(.hidden)');
+                    if (openDropdown) openDropdown.classList.add('hidden');
                 }
-                
-                // Filter by status
-                if (this.selectedStatus) {
-                    filtered = filtered.filter(att => att.status === this.selectedStatus);
+            });
+
+            // Toggle Sidebar Functionality
+            const toggleSidebar = () => {
+                const sidebar = document.getElementById('sidebar');
+                const toggleBtn = document.getElementById('toggleSidebar');
+
+                if (!sidebar || !toggleBtn) return;
+
+                sidebar.classList.toggle('collapsed');
+
+                const icon = toggleBtn.querySelector('i');
+                if (sidebar.classList.contains('collapsed')) {
+                    icon.classList.replace('fa-chevron-left', 'fa-chevron-right');
+                    toggleBtn.querySelector('.nav-text').textContent = 'Expand';
+                } else {
+                    icon.classList.replace('fa-chevron-right', 'fa-chevron-left');
+                    toggleBtn.querySelector('.nav-text').textContent = 'Collapse';
                 }
+
+                localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+            };
+
+            // Mobile sidebar toggle
+            const toggleMobileSidebar = () => {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.toggle('mobile-open');
+
+                // On mobile, we don't want the collapsed state when opening
+                if (sidebar.classList.contains('mobile-open')) {
+                    sidebar.classList.remove('collapsed');
+                }
+            };
+
+            // Initialize sidebar state from localStorage
+            const initializeSidebar = () => {
+                const sidebar = document.getElementById('sidebar');
+                const toggleBtn = document.getElementById('toggleSidebar');
+                const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+
+                if (!sidebar || !toggleBtn) return;
+
+                // Only apply collapsed state on desktop
+                if (window.innerWidth > 768) {
+                    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+
+                    if (isCollapsed) {
+                        sidebar.classList.add('collapsed');
+                        const icon = toggleBtn.querySelector('i');
+                        icon.classList.replace('fa-chevron-left', 'fa-chevron-right');
+                        toggleBtn.querySelector('.nav-text').textContent = 'Expand';
+                    }
+                }
+
+                // Set up event listeners
+                toggleBtn.addEventListener('click', toggleSidebar);
+
+                if (mobileMenuBtn) {
+                    mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
+                }
+
+                // Close mobile sidebar when clicking outside
+                document.addEventListener('click', function(e) {
+                    const sidebar = document.getElementById('sidebar');
+                    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+
+                    if (window.innerWidth <= 768 && 
+                        !e.target.closest('#sidebar') && 
+                        !e.target.closest('#mobileMenuBtn') &&
+                        sidebar.classList.contains('mobile-open')) {
+                        sidebar.classList.remove('mobile-open');
+                    }
+                });
+            };
+
+            // Handle window resize
+            const handleResize = () => {
+                const sidebar = document.getElementById('sidebar');
+
+                if (window.innerWidth > 768) {
+                    // Desktop - remove mobile-open class if it exists
+                    sidebar.classList.remove('mobile-open');
+                } else {
+                    // Mobile - ensure sidebar is hidden by default
+                    if (!sidebar.classList.contains('mobile-open')) {
+                        sidebar.classList.remove('collapsed');
+                    }
+                }
+            };
+
+            // Initialize on page load
+            initializeSidebar();
+
+            // Add resize event listener
+            window.addEventListener('resize', handleResize);
+
+            // Update current date and time
+            function updateDateTime() {
+                const now = new Date();
+                const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
                 
-                // Filter by date range
-                if (this.startDate && this.endDate) {
-                    filtered = filtered.filter(att => {
-                        const date = new Date(att.date);
-                        return date >= new Date(this.startDate) && date <= new Date(this.endDate);
+                document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
+                document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
+            }
+
+            // Update immediately and then every second
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+
+            // Sample attendance data
+            const attendanceData = [
+                { date: '2023-06-01', timeIn: '08:00 AM', timeOut: '05:00 PM', status: 'Present', hours: '9.0', remarks: '' },
+                { date: '2023-06-02', timeIn: '08:15 AM', timeOut: '05:30 PM', status: 'Present', hours: '9.25', remarks: 'Late arrival' },
+                { date: '2023-06-03', timeIn: '08:05 AM', timeOut: '04:45 PM', status: 'Present', hours: '8.67', remarks: 'Early departure' },
+                { date: '2023-06-04', timeIn: '-', timeOut: '-', status: 'Weekend', hours: '0.0', remarks: '' },
+                { date: '2023-06-05', timeIn: '08:00 AM', timeOut: '05:00 PM', status: 'Present', hours: '9.0', remarks: '' },
+                { date: '2023-06-06', timeIn: '08:00 AM', timeOut: '05:00 PM', status: 'Present', hours: '9.0', remarks: '' },
+                { date: '2023-06-07', timeIn: '08:00 AM', timeOut: '05:00 PM', status: 'Present', hours: '9.0', remarks: '' },
+                { date: '2023-06-08', timeIn: '08:00 AM', timeOut: '05:00 PM', status: 'Present', hours: '9.0', remarks: '' },
+                { date: '2023-06-09', timeIn: '08:00 AM', timeOut: '05:00 PM', status: 'Present', hours: '9.0', remarks: '' },
+                { date: '2023-06-10', timeIn: '-', timeOut: '-', status: 'Weekend', hours: '0.0', remarks: '' },
+            ];
+
+            // Load attendance records
+            function loadAttendanceRecords(filter = 'all') {
+                const recordsContainer = document.getElementById('attendanceRecords');
+                recordsContainer.innerHTML = '';
+
+                let filteredData = [...attendanceData];
+                const today = new Date();
+                
+                if (filter === 'today') {
+                    const todayStr = today.toISOString().split('T')[0];
+                    filteredData = attendanceData.filter(record => record.date === todayStr);
+                } else if (filter === 'week') {
+                    const oneWeekAgo = new Date(today);
+                    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                    filteredData = attendanceData.filter(record => {
+                        const recordDate = new Date(record.date);
+                        return recordDate >= oneWeekAgo && recordDate <= today;
+                    });
+                } else if (filter === 'month') {
+                    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                    filteredData = attendanceData.filter(record => {
+                        const recordDate = new Date(record.date);
+                        return recordDate >= firstDayOfMonth && recordDate <= today;
                     });
                 }
-                
-                // Sort attendances
-                return filtered.sort((a, b) => {
-                    let aValue = a[this.sortColumn] || '';
-                    let bValue = b[this.sortColumn] || '';
+
+                filteredData.forEach(record => {
+                    const row = document.createElement('tr');
+                    row.className = 'attendance-record hover:bg-gray-50 transition-colors';
                     
-                    if (aValue < bValue) return this.sortDirection === 'asc' ? -1 : 1;
-                    if (aValue > bValue) return this.sortDirection === 'asc' ? 1 : -1;
-                    return 0;
-                });
-            },
-            
-            get totalPages() {
-                return Math.ceil(this.filteredAttendances.length / this.pageSize);
-            },
-            
-            get visiblePages() {
-                const pages = [];
-                let startPage = Math.max(1, this.currentPage - Math.floor(this.maxVisiblePages / 2));
-                let endPage = Math.min(this.totalPages, startPage + this.maxVisiblePages - 1);
-                
-                if (endPage - startPage + 1 < this.maxVisiblePages) {
-                    startPage = Math.max(1, endPage - this.maxVisiblePages + 1);
-                }
-                
-                for (let i = startPage; i <= endPage; i++) {
-                    pages.push(i);
-                }
-                
-                return pages;
-            },
-            
-            get paginatedAttendances() {
-                const start = (this.currentPage - 1) * this.pageSize;
-                return this.filteredAttendances.slice(start, start + this.pageSize);
-            },
-            
-            // Methods
-            initDateRangePicker() {
-                const picker = $(this.$refs.dateRangePicker).daterangepicker({
-                    opens: 'left',
-                    autoUpdateInput: false,
-                    locale: {
-                        cancelLabel: 'Clear'
-                    }
+                    // Determine status color
+                    let statusColor = 'text-gray-600';
+                    if (record.status === 'Present') statusColor = 'text-green-600';
+                    else if (record.status === 'Late') statusColor = 'text-yellow-600';
+                    else if (record.status === 'Absent') statusColor = 'text-red-600';
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${record.date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${record.timeIn}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${record.timeOut}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm ${statusColor} font-semibold">${record.status}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${record.hours}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${record.remarks}</td>
+                    `;
+                    
+                    recordsContainer.appendChild(row);
                 });
 
-                picker.on('apply.daterangepicker', (ev, picker) => {
-                    this.startDate = picker.startDate.format('YYYY-MM-DD');
-                    this.endDate = picker.endDate.format('YYYY-MM-DD');
-                    $(this.$refs.dateRangePicker).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format('MM/DD/YYYY'));
-                    this.filterAttendances();
-                });
-
-                picker.on('cancel.daterangepicker', () => {
-                    this.startDate = '';
-                    this.endDate = '';
-                    $(this.$refs.dateRangePicker).val('');
-                    this.filterAttendances();
-                });
-            },
-            
-            sortAttendances(column) {
-                if (this.sortColumn === column) {
-                    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-                } else {
-                    this.sortColumn = column;
-                    this.sortDirection = 'asc';
-                }
-            },
-            
-            checkInOut(type) {
-                fetch("{{ route('employee.attendance.check') }}", {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        type: type
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        if (type === 'check-in') {
-                            if (!this.todayAttendance) {
-                                this.todayAttendance = data.attendance;
-                                this.attendances.unshift(data.attendance);
-                            } else {
-                                this.todayAttendance = data.attendance;
-                                const index = this.attendances.findIndex(att => att.id === data.attendance.id);
-                                if (index !== -1) {
-                                    this.attendances[index] = data.attendance;
-                                }
-                            }
-                        } else if (type === 'check-out') {
-                            this.todayAttendance = data.attendance;
-                            const index = this.attendances.findIndex(att => att.id === data.attendance.id);
-                            if (index !== -1) {
-                                this.attendances[index] = data.attendance;
-                            }
-                        }
-                        
-                        this.showToast(data.message);
-                    } else {
-                        throw new Error(data.message || 'Failed to process attendance');
-                    }
-                })
-                .catch(error => {
-                    this.showToast(error.message, 'error');
-                    console.error('Error:', error);
-                });
-            },
-            
-            openRegularizationModal() {
-                this.regularizationData = {
-                    date: new Date().toISOString().split('T')[0],
-                    time_in: '',
-                    time_out: '',
-                    reason: ''
-                };
-                this.isRegularizationModalOpen = true;
-                setTimeout(() => {
-                    const modal = document.querySelector('[x-show="isRegularizationModalOpen"]');
-                    if (modal) modal.style.display = 'block';
-                }, 50);
-            },
-            
-            closeRegularizationModal() {
-                this.isRegularizationModalOpen = false;
-                const modal = document.querySelector('[x-show="isRegularizationModalOpen"]');
-                if (modal) modal.style.display = 'none';
-            },
-            
-            submitRegularization() {
-                fetch("{{ route('employee.attendance.regularization') }}", {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        attendance_id: this.todayAttendance ? this.todayAttendance.id : null,
-                        date: this.regularizationData.date,
-                        time_in: this.regularizationData.time_in,
-                        time_out: this.regularizationData.time_out,
-                        reason: this.regularizationData.reason
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        if (this.todayAttendance) {
-                            const index = this.attendances.findIndex(att => att.id === data.attendance.id);
-                            if (index !== -1) {
-                                this.attendances[index] = data.attendance;
-                            }
-                        } else {
-                            this.attendances.unshift(data.attendance);
-                        }
-                        
-                        this.todayAttendance = data.attendance;
-                        this.closeRegularizationModal();
-                        this.showToast(data.message);
-                    } else {
-                        throw new Error(data.message || 'Failed to submit regularization request');
-                    }
-                })
-                .catch(error => {
-                    this.showToast(error.message, 'error');
-                    console.error('Error:', error);
-                });
-            },
-            
-            showToast(message, type = 'success') {
-                const toast = document.createElement('div');
-                toast.className = `fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg text-white flex items-center ${
-                    type === 'success' ? 'bg-green-500' : 'bg-red-500'
-                } z-50 transition-all duration-300 ease-in-out`;
-                
-                const icon = document.createElement('i');
-                icon.className = type === 'success' ? 'fas fa-check-circle mr-2' : 'fas fa-exclamation-circle mr-2';
-                toast.appendChild(icon);
-                
-                const text = document.createElement('span');
-                text.textContent = message;
-                toast.appendChild(text);
-                
-                document.body.appendChild(toast);
-                
-                setTimeout(() => {
-                    toast.classList.add('opacity-0', 'translate-y-2');
-                    setTimeout(() => toast.remove(), 300);
-                }, 3000);
-            },
-            
-            filterAttendances() {
-                // Reset to first page when filters change
-                this.currentPage = 1;
+                // Update pagination info
+                document.getElementById('startRecord').textContent = '1';
+                document.getElementById('endRecord').textContent = filteredData.length;
+                document.getElementById('totalRecords').textContent = filteredData.length;
             }
-        };
-    }
-</script>
-@endpush
 
-@push('styles')
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
-@endpush
+            // Initialize attendance records
+            loadAttendanceRecords();
 
-@push('scripts')
-<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-@endpush
-@endsection
+            // Filter change handler
+            document.getElementById('recordFilter').addEventListener('change', function() {
+                loadAttendanceRecords(this.value);
+            });
+
+            // Biometric scan simulation
+            document.getElementById('scanFingerprintBtn').addEventListener('click', function() {
+                const fingerprintScan = document.querySelector('.fingerprint-scan');
+                const statusText = document.querySelector('.fingerprint-scan + div');
+                
+                // Show scanning state
+                this.disabled = true;
+                this.textContent = 'Scanning...';
+                fingerprintScan.classList.add('animate-pulse');
+                statusText.textContent = 'Scanning...';
+                statusText.classList.remove('bg-white', 'text-blue-800');
+                statusText.classList.add('bg-blue-200', 'text-blue-900');
+                
+                // Simulate scan after 3 seconds
+                setTimeout(() => {
+                    fingerprintScan.classList.remove('animate-pulse');
+                    this.disabled = false;
+                    this.textContent = 'Scan Complete';
+                    
+                    // Random success/failure
+                    if (Math.random() > 0.2) { // 80% success rate
+                        statusText.textContent = 'Scan Successful';
+                        statusText.classList.remove('bg-blue-200', 'text-blue-900');
+                        statusText.classList.add('bg-green-100', 'text-green-800');
+                        
+                        // Update attendance status
+                        document.getElementById('attendanceStatus').textContent = 'Time In: ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        
+                        // Show success message
+                        showMessage('Fingerprint scanned successfully. Attendance recorded.', 'success');
+                        
+                        // Reset button after 2 seconds
+                        setTimeout(() => {
+                            this.textContent = 'Start Scanning';
+                            statusText.textContent = 'Ready to Scan';
+                            statusText.classList.remove('bg-green-100', 'text-green-800');
+                            statusText.classList.add('bg-white', 'text-blue-800');
+                        }, 2000);
+                    } else {
+                        statusText.textContent = 'Scan Failed';
+                        statusText.classList.remove('bg-blue-200', 'text-blue-900');
+                        statusText.classList.add('bg-red-100', 'text-red-800');
+                        this.textContent = 'Try Again';
+                        
+                        // Show error message
+                        showMessage('Fingerprint scan failed. Please try again.', 'error');
+                    }
+                }, 3000);
+            });
+
+            // Quick action buttons
+            document.getElementById('timeInBtn').addEventListener('click', function() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                document.getElementById('attendanceStatus').textContent = 'Time In: ' + timeString;
+                showMessage('Time In recorded at ' + timeString, 'success');
+            });
+
+            document.getElementById('timeOutBtn').addEventListener('click', function() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                document.getElementById('attendanceStatus').textContent = 'Time Out: ' + timeString;
+                showMessage('Time Out recorded at ' + timeString, 'success');
+            });
+
+            document.getElementById('breakStartBtn').addEventListener('click', function() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                showMessage('Break started at ' + timeString, 'info');
+            });
+
+            document.getElementById('breakEndBtn').addEventListener('click', function() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                showMessage('Break ended at ' + timeString, 'info');
+            });
+
+            // Manual attendance submission
+            document.getElementById('submitManualAttendanceBtn').addEventListener('click', function() {
+                const type = document.getElementById('attendanceType').value;
+                const date = document.getElementById('attendanceDate').value;
+                const time = document.getElementById('attendanceTime').value;
+                const remarks = document.getElementById('attendanceRemarks').value;
+                
+                if (!date || !time) {
+                    showMessage('Please select both date and time', 'error');
+                    return;
+                }
+                
+                const action = type === 'time_in' ? 'Time In' : 'Time Out';
+                const timeString = new Date(`${date}T${time}`).toLocaleString([], {year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'});
+                
+                if (type === 'time_in') {
+                    document.getElementById('attendanceStatus').textContent = 'Time In: ' + timeString.split(', ')[1];
+                } else {
+                    document.getElementById('attendanceStatus').textContent = 'Time Out: ' + timeString.split(', ')[1];
+                }
+                
+                showMessage(`Manual ${action} recorded for ${timeString}`, 'success');
+                
+                // Reset form
+                document.getElementById('attendanceRemarks').value = '';
+            });
+
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('attendanceDate').value = today;
+            
+            // Set default time to now
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('attendanceTime').value = `${hours}:${minutes}`;
+
+            // Show message function
+            function showMessage(message, type) {
+                const successDiv = document.getElementById('successMessage');
+                const errorDiv = document.getElementById('errorMessage');
+                
+                if (type === 'success') {
+                    document.getElementById('successMessageText').textContent = message;
+                    successDiv.classList.remove('hidden');
+                    errorDiv.classList.add('hidden');
+                    
+                    // Hide after 5 seconds
+                    setTimeout(() => {
+                        successDiv.classList.add('hidden');
+                    }, 5000);
+                } else {
+                    document.getElementById('errorMessageText').textContent = message;
+                    errorDiv.classList.remove('hidden');
+                    successDiv.classList.add('hidden');
+                    
+                    // Hide after 5 seconds
+                    setTimeout(() => {
+                        errorDiv.classList.add('hidden');
+                    }, 5000);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

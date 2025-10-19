@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BIPSU HRMIS - @yield('title')</title>
+    <title>BiPSU HRMIS - @yield('title')</title>
     @vite('resources/css/app.css')
     <link rel="icon" href="{{ asset('favicon.png') }}" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -223,6 +223,18 @@
                     <a href="{{ route('employees.payroll') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
                         <i class="fas fa-money-bill-wave mr-3"></i>
                         <span class="nav-text">Payroll</span>
+                    </a>
+                </div>
+                <div class="px-4 py-2">
+                    <a href="{{ route('employees.pds') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-id-card mr-3"></i>
+                        <span class="nav-text">PDS</span>
+                    </a>
+                </div>
+                <div class="px-4 py-2">
+                    <a href="{{ route('employees.saln') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-file-contract mr-3"></i>
+                        <span class="nav-text">SALN</span>
                     </a>
                 </div>
                 <div class="px-4 py-2">

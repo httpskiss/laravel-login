@@ -108,6 +108,14 @@ Route::prefix('employee/attendance')->group(function () {
         Route::get('/payroll', function () {
             return view('admin.payroll');
         })->name('admin.payroll');
+
+        Route::get('/pds', function () {
+            return view('admin.pds');
+        })->name('admin.pds');
+
+        Route::get('/saln', function () {
+            return view('admin.saln');
+        })->name('admin.saln');
         
         Route::get('/reports', function () {
             return view('admin.reports');
@@ -259,6 +267,14 @@ Route::prefix('employee/attendance')->middleware(['auth', 'verified'])->group(fu
         Route::get('/payroll', function () {
             return view('employees.payroll');
         })->name('employees.payroll');
+
+        Route::get('/pds', function () {
+            return view('employees.pds');
+        })->name('employees.pds');
+
+        Route::get('/saln', function () {
+            return view('employees.saln');
+        })->name('employees.saln');
 
         // Reports
         Route::get('/reports', function () {

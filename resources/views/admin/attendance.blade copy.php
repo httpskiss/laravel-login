@@ -26,64 +26,52 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500">Today's Present</p>
-                    <h3 class="text-3xl font-bold mt-2" x-text="dashboardStats.today_present"></h3>
+                    <h3 class="text-3xl font-bold mt-2">142</h3>
                 </div>
                 <div class="p-3 rounded-full bg-green-100 text-green-600">
                     <i class="fas fa-user-check text-xl"></i>
                 </div>
             </div>
-            <p class="text-sm text-gray-500 mt-4">
-                <span x-text="dashboardStats.today_present_change >= 0 ? '+' + dashboardStats.today_present_change + '%' : dashboardStats.today_present_change + '%'" 
-                      :class="{'text-green-500': dashboardStats.today_present_change >= 0, 'text-red-500': dashboardStats.today_present_change < 0}"></span> from yesterday
-            </p>
+            <p class="text-sm text-gray-500 mt-4"><span class="text-green-500">+5%</span> from yesterday</p>
         </div>
         
         <div class="bg-white rounded-lg shadow p-6 attendance-card">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500">Today's Absent</p>
-                    <h3 class="text-3xl font-bold mt-2" x-text="dashboardStats.today_absent"></h3>
+                    <h3 class="text-3xl font-bold mt-2">18</h3>
                 </div>
                 <div class="p-3 rounded-full bg-red-100 text-red-600">
                     <i class="fas fa-user-slash text-xl"></i>
                 </div>
             </div>
-            <p class="text-sm text-gray-500 mt-4">
-                <span x-text="dashboardStats.today_absent_change >= 0 ? '+' + dashboardStats.today_absent_change + '%' : dashboardStats.today_absent_change + '%'" 
-                      :class="{'text-green-500': dashboardStats.today_absent_change < 0, 'text-red-500': dashboardStats.today_absent_change >= 0}"></span> from yesterday
-            </p>
+            <p class="text-sm text-gray-500 mt-4"><span class="text-red-500">-2%</span> from yesterday</p>
         </div>
         
         <div class="bg-white rounded-lg shadow p-6 attendance-card">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500">Late Arrivals</p>
-                    <h3 class="text-3xl font-bold mt-2" x-text="dashboardStats.today_late"></h3>
+                    <h3 class="text-3xl font-bold mt-2">24</h3>
                 </div>
                 <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
                     <i class="fas fa-clock text-xl"></i>
                 </div>
             </div>
-            <p class="text-sm text-gray-500 mt-4">
-                <span x-text="dashboardStats.today_late_change >= 0 ? '+' + dashboardStats.today_late_change + '%' : dashboardStats.today_late_change + '%'" 
-                      :class="{'text-green-500': dashboardStats.today_late_change < 0, 'text-red-500': dashboardStats.today_late_change >= 0}"></span> from yesterday
-            </p>
+            <p class="text-sm text-gray-500 mt-4"><span class="text-yellow-500">+3%</span> from yesterday</p>
         </div>
         
         <div class="bg-white rounded-lg shadow p-6 attendance-card">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500">On Leave</p>
-                    <h3 class="text-3xl font-bold mt-2" x-text="dashboardStats.today_on_leave"></h3>
+                    <h3 class="text-3xl font-bold mt-2">16</h3>
                 </div>
                 <div class="p-3 rounded-full bg-blue-100 text-blue-600">
                     <i class="fas fa-umbrella-beach text-xl"></i>
                 </div>
             </div>
-            <p class="text-sm text-gray-500 mt-4">
-                <span x-text="dashboardStats.today_on_leave_change >= 0 ? '+' + dashboardStats.today_on_leave_change + '%' : dashboardStats.today_on_leave_change + '%'" 
-                      :class="{'text-green-500': dashboardStats.today_on_leave_change >= 0, 'text-red-500': dashboardStats.today_on_leave_change < 0}"></span> from yesterday
-            </p>
+            <p class="text-sm text-gray-500 mt-4"><span class="text-blue-500">+1%</span> from yesterday</p>
         </div>
     </div>
     
@@ -156,12 +144,6 @@
                 <i class="fas fa-plus mr-2"></i> Add Record
             </button>
             @endcan
-            <a 
-                href="{{ route('admin.attendance.export') }}"
-                class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md transition duration-150 ease-in-out"
-            >
-                <i class="fas fa-file-export mr-2"></i> Export
-            </a>
         </div>
     </div>
 
@@ -222,16 +204,10 @@
                                 <div x-show="attendance.time_in" class="flex items-center">
                                     <i class="fas fa-sign-in-alt text-green-500 mr-2"></i>
                                     <span x-text="attendance.time_in"></span>
-                                    <span x-show="attendance.biometric_id" class="ml-2 text-xs text-blue-500 flex items-center" title="Biometric Verified">
-                                        <i class="fas fa-fingerprint mr-1"></i>
-                                    </span>
                                 </div>
                                 <div x-show="attendance.time_out" class="flex items-center mt-1">
                                     <i class="fas fa-sign-out-alt text-red-500 mr-2"></i>
                                     <span x-text="attendance.time_out"></span>
-                                    <span x-show="attendance.biometric_id" class="ml-2 text-xs text-blue-500 flex items-center" title="Biometric Verified">
-                                        <i class="fas fa-fingerprint mr-1"></i>
-                                    </span>
                                 </div>
                                 <div x-show="!attendance.time_in && !attendance.time_out" class="text-gray-400">
                                     N/A
@@ -440,41 +416,21 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Time In</label>
-                            <div class="flex items-center gap-2">
-                                <input 
-                                    x-model="currentAttendance.time_in"
-                                    name="time_in"
-                                    type="time" 
-                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition duration-150 ease-in-out"
-                                >
-                                <button 
-                                    type="button" 
-                                    @click="scanFingerprint('time_in')"
-                                    class="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition duration-150 ease-in-out"
-                                    title="Scan Fingerprint"
-                                >
-                                    <i class="fas fa-fingerprint"></i>
-                                </button>
-                            </div>
+                            <input 
+                                x-model="currentAttendance.time_in"
+                                name="time_in"
+                                type="time" 
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition duration-150 ease-in-out"
+                            >
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Time Out</label>
-                            <div class="flex items-center gap-2">
-                                <input 
-                                    x-model="currentAttendance.time_out"
-                                    name="time_out"
-                                    type="time" 
-                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition duration-150 ease-in-out"
-                                >
-                                <button 
-                                    type="button" 
-                                    @click="scanFingerprint('time_out')"
-                                    class="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition duration-150 ease-in-out"
-                                    title="Scan Fingerprint"
-                                >
-                                    <i class="fas fa-fingerprint"></i>
-                                </button>
-                            </div>
+                            <input 
+                                x-model="currentAttendance.time_out"
+                                name="time_out"
+                                type="time" 
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition duration-150 ease-in-out"
+                            >
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
@@ -512,25 +468,6 @@
                             ></textarea>
                         </div>
                         <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                            <div class="flex items-center gap-3">
-                                <button 
-                                    type="button" 
-                                    @click="captureLocation()"
-                                    class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-150 ease-in-out flex items-center"
-                                >
-                                    <i class="fas fa-map-marker-alt mr-2"></i>
-                                    Capture Location
-                                </button>
-                                <span x-show="currentAttendance.latitude && currentAttendance.longitude" class="text-sm text-green-600 flex items-center">
-                                    <i class="fas fa-check-circle mr-1"></i>
-                                    Location captured
-                                </span>
-                                <input type="hidden" x-model="currentAttendance.latitude" name="latitude">
-                                <input type="hidden" x-model="currentAttendance.longitude" name="longitude">
-                            </div>
-                        </div>
-                        <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                             <textarea 
                                 x-model="currentAttendance.notes"
@@ -557,54 +494,6 @@
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Fingerprint Scanner Modal -->
-    <div 
-        x-show="isFingerprintModalOpen" 
-        @keydown.escape.window="closeFingerprintModal()"
-        @click.away="closeFingerprintModal()"
-        class="fixed inset-0 bg-gray-500 bg-opacity-75 overflow-y-auto h-full w-full z-50 transition-opacity duration-300 ease-in-out"
-        style="display: none;"
-        x-transition:enter="ease-out duration-300"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="ease-in duration-200"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-    >
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-xl rounded-xl bg-white" 
-             @click.stop
-             x-transition:enter="ease-out duration-300"
-             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-             x-transition:leave="ease-in duration-200"
-             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
-                <h3 class="text-xl font-semibold text-gray-900">Fingerprint Verification</h3>
-                <button @click="closeFingerprintModal()" class="text-gray-400 hover:text-gray-500 transition duration-150 ease-in-out">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="mt-4 text-center">
-                <div class="mb-6">
-                    <div class="relative mx-auto w-40 h-40 bg-gray-100 rounded-full flex items-center justify-center fingerprint-scan">
-                        <div class="absolute inset-0 rounded-full border-4 border-blue-200 animate-pulse"></div>
-                        <i class="fas fa-fingerprint text-5xl text-blue-500"></i>
-                    </div>
-                </div>
-                <p class="text-gray-600 mb-4" x-text="fingerprintMessage"></p>
-                <div class="flex justify-center">
-                    <button 
-                        @click="simulateFingerprintScan()"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-150 ease-in-out"
-                    >
-                        Simulate Scan
-                    </button>
-                </div>
             </div>
         </div>
     </div>
@@ -740,10 +629,6 @@
                                     <p class="text-sm font-medium text-gray-500">Regularized At</p>
                                     <p x-text="new Date(viewAttendanceData.regularized_at).toLocaleString()" class="text-sm text-gray-700"></p>
                                 </div>
-                                <div x-show="viewAttendanceData.biometric_id">
-                                    <p class="text-sm font-medium text-gray-500">Biometric ID</p>
-                                    <p x-text="viewAttendanceData.biometric_id" class="text-sm text-gray-700"></p>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -766,31 +651,6 @@
                                 <div>
                                     <p class="text-sm font-medium text-gray-500">Total Hours</p>
                                     <p x-text="viewAttendanceData.total_hours ? viewAttendanceData.total_hours + ' hours' : 'N/A'" class="text-sm text-gray-700"></p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-gray-50 p-6 rounded-lg shadow-sm mb-4">
-                            <h4 class="font-medium text-gray-900 mb-3 border-b border-gray-200 pb-2 flex items-center">
-                                <i class="fas fa-location-arrow mr-2 text-blue-500"></i>
-                                Location Details
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500">IP Address</p>
-                                    <p x-text="viewAttendanceData.ip_address || 'N/A'" class="text-sm text-gray-700"></p>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-500">Device Info</p>
-                                    <p x-text="viewAttendanceData.device_info || 'N/A'" class="text-sm text-gray-700"></p>
-                                </div>
-                                <div x-show="viewAttendanceData.location">
-                                    <p class="text-sm font-medium text-gray-500">Location</p>
-                                    <p x-text="viewAttendanceData.location" class="text-sm text-gray-700"></p>
-                                </div>
-                                <div x-show="viewAttendanceData.latitude && viewAttendanceData.longitude">
-                                    <p class="text-sm font-medium text-gray-500">Coordinates</p>
-                                    <p x-text="viewAttendanceData.latitude + ', ' + viewAttendanceData.longitude" class="text-sm text-gray-700"></p>
                                 </div>
                             </div>
                         </div>
@@ -833,16 +693,6 @@
             attendances: @json($attendances->items()),
             employees: @json($employees),
             departments: @json($departments),
-            dashboardStats: {
-                today_present: 0,
-                today_absent: 0,
-                today_late: 0,
-                today_on_leave: 0,
-                today_present_change: 0,
-                today_absent_change: 0,
-                today_late_change: 0,
-                today_on_leave_change: 0
-            },
             searchQuery: '',
             selectedDepartment: '',
             selectedEmployee: '',
@@ -860,36 +710,22 @@
             isEditing: false,
             isDeleteModalOpen: false,
             isViewModalOpen: false,
-            isFingerprintModalOpen: false,
             attendanceToDelete: null,
-            
-            // Fingerprint scanning
-            fingerprintMessage: 'Place your finger on the scanner',
-            fingerprintType: '', // 'time_in' or 'time_out'
             
             // Attendance data
             currentAttendance: {
                 id: '',
                 user_id: '',
-                date: new Date().toISOString().split('T')[0],
+                date: '',
                 time_in: '',
                 time_out: '',
                 status: 'present',
                 notes: '',
                 is_regularized: 'false',
-                regularization_reason: '',
-                biometric_id: '',
-                latitude: null,
-                longitude: null
+                regularization_reason: ''
             },
             
             viewAttendanceData: {},
-            
-            // Initialize component
-            init() {
-                this.initDateRangePicker();
-                this.loadDashboardStats();
-            },
             
             // Computed properties
             get filteredAttendances() {
@@ -999,27 +835,6 @@
                 });
             },
             
-            loadDashboardStats() {
-                fetch("{{ route('admin.attendance.departments.data') }}")
-                    .then(response => response.json())
-                    .then(data => {
-                        // Calculate today's stats (simplified for demo)
-                        const today = new Date().toISOString().split('T')[0];
-                        const todayAttendances = this.attendances.filter(att => att.date === today);
-                        
-                        this.dashboardStats.today_present = todayAttendances.filter(att => att.status === 'present').length;
-                        this.dashboardStats.today_absent = todayAttendances.filter(att => att.status === 'absent').length;
-                        this.dashboardStats.today_late = todayAttendances.filter(att => att.status === 'late').length;
-                        this.dashboardStats.today_on_leave = todayAttendances.filter(att => att.status === 'on_leave').length;
-                        
-                        // Calculate change from yesterday (simplified for demo)
-                        this.dashboardStats.today_present_change = Math.floor(Math.random() * 10) - 2;
-                        this.dashboardStats.today_absent_change = Math.floor(Math.random() * 10) - 2;
-                        this.dashboardStats.today_late_change = Math.floor(Math.random() * 10) - 2;
-                        this.dashboardStats.today_on_leave_change = Math.floor(Math.random() * 10) - 2;
-                    });
-            },
-            
             sortAttendances(column) {
                 if (this.sortColumn === column) {
                     this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -1040,10 +855,7 @@
                     status: 'present',
                     notes: '',
                     is_regularized: 'false',
-                    regularization_reason: '',
-                    biometric_id: '',
-                    latitude: null,
-                    longitude: null
+                    regularization_reason: ''
                 };
                 this.isAttendanceModalOpen = true;
                 setTimeout(() => {
@@ -1064,10 +876,7 @@
                         status: attendance.status,
                         notes: attendance.notes,
                         is_regularized: attendance.is_regularized ? 'true' : 'false',
-                        regularization_reason: attendance.regularization_reason,
-                        biometric_id: attendance.biometric_id,
-                        latitude: attendance.latitude,
-                        longitude: attendance.longitude
+                        regularization_reason: attendance.regularization_reason
                     };
                     this.isEditing = true;
                     this.isAttendanceModalOpen = true;
@@ -1099,84 +908,23 @@
                 }, 50);
             },
             
-            scanFingerprint(type) {
-                this.fingerprintType = type;
-                this.fingerprintMessage = 'Place your finger on the scanner';
-                this.isFingerprintModalOpen = true;
-                setTimeout(() => {
-                    const modal = document.querySelector('[x-show="isFingerprintModalOpen"]');
-                    if (modal) modal.style.display = 'block';
-                }, 50);
+            closeAttendanceModal() {
+                this.isAttendanceModalOpen = false;
+                const modal = document.querySelector('[x-show="isAttendanceModalOpen"]');
+                if (modal) modal.style.display = 'none';
             },
             
-            simulateFingerprintScan() {
-                this.fingerprintMessage = 'Scanning...';
-                
-                // Simulate fingerprint scan with delay
-                setTimeout(() => {
-                    // Generate a random fingerprint ID for simulation
-                    const fingerprintId = 'fp_' + Math.random().toString(36).substr(2, 9);
-                    
-                    // Update the current time based on fingerprint type
-                    const now = new Date();
-                    const hours = String(now.getHours()).padStart(2, '0');
-                    const minutes = String(now.getMinutes()).padStart(2, '0');
-                    const currentTime = `${hours}:${minutes}`;
-                    
-                    if (this.fingerprintType === 'time_in') {
-                        this.currentAttendance.time_in = currentTime;
-                    } else {
-                        this.currentAttendance.time_out = currentTime;
-                    }
-                    
-                    // Set biometric ID
-                    this.currentAttendance.biometric_id = fingerprintId;
-                    
-                    this.fingerprintMessage = 'Verification successful!';
-                    
-                    // Close modal after success
-                    setTimeout(() => {
-                        this.closeFingerprintModal();
-                        this.showToast('Fingerprint verified successfully');
-                    }, 1000);
-                }, 1500);
+            closeDeleteModal() {
+                this.isDeleteModalOpen = false;
+                this.attendanceToDelete = null;
+                const modal = document.querySelector('[x-show="isDeleteModalOpen"]');
+                if (modal) modal.style.display = 'none';
             },
             
-            captureLocation() {
-                if (navigator.geolocation) {
-                    this.showToast('Requesting location... Please allow location access if prompted.', 'info');
-                    
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            this.currentAttendance.latitude = position.coords.latitude;
-                            this.currentAttendance.longitude = position.coords.longitude;
-                            this.showToast('Location captured successfully');
-                        },
-                        (error) => {
-                            console.error('Geolocation error:', error);
-                            let errorMessage = 'Failed to capture location';
-                            switch(error.code) {
-                                case error.PERMISSION_DENIED:
-                                    errorMessage = 'Location access was denied';
-                                    break;
-                                case error.POSITION_UNAVAILABLE:
-                                    errorMessage = 'Location information is unavailable';
-                                    break;
-                                case error.TIMEOUT:
-                                    errorMessage = 'The request to get location timed out';
-                                    break;
-                            }
-                            this.showToast(errorMessage, 'error');
-                        },
-                        {
-                            enableHighAccuracy: true,
-                            timeout: 5000,
-                            maximumAge: 0
-                        }
-                    );
-                } else {
-                    this.showToast('Geolocation is not supported by this browser', 'error');
-                }
+            closeViewModal() {
+                this.isViewModalOpen = false;
+                const modal = document.querySelector('[x-show="isViewModalOpen"]');
+                if (modal) modal.style.display = 'none';
             },
             
             saveAttendance() {
@@ -1193,12 +941,6 @@
                 formData.append('notes', this.currentAttendance.notes || '');
                 formData.append('is_regularized', this.currentAttendance.is_regularized === 'true');
                 formData.append('regularization_reason', this.currentAttendance.regularization_reason || '');
-                formData.append('biometric_id', this.currentAttendance.biometric_id || '');
-                
-                if (this.currentAttendance.latitude && this.currentAttendance.longitude) {
-                    formData.append('latitude', this.currentAttendance.latitude);
-                    formData.append('longitude', this.currentAttendance.longitude);
-                }
                 
                 if (this.isEditing) {
                     formData.append('_method', 'PUT');
@@ -1269,43 +1011,14 @@
                 });
             },
             
-            closeAttendanceModal() {
-                this.isAttendanceModalOpen = false;
-                const modal = document.querySelector('[x-show="isAttendanceModalOpen"]');
-                if (modal) modal.style.display = 'none';
-            },
-            
-            closeDeleteModal() {
-                this.isDeleteModalOpen = false;
-                this.attendanceToDelete = null;
-                const modal = document.querySelector('[x-show="isDeleteModalOpen"]');
-                if (modal) modal.style.display = 'none';
-            },
-            
-            closeViewModal() {
-                this.isViewModalOpen = false;
-                const modal = document.querySelector('[x-show="isViewModalOpen"]');
-                if (modal) modal.style.display = 'none';
-            },
-            
-            closeFingerprintModal() {
-                this.isFingerprintModalOpen = false;
-                const modal = document.querySelector('[x-show="isFingerprintModalOpen"]');
-                if (modal) modal.style.display = 'none';
-            },
-            
             showToast(message, type = 'success') {
                 const toast = document.createElement('div');
                 toast.className = `fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg text-white flex items-center ${
-                    type === 'success' ? 'bg-green-500' : 
-                    type === 'error' ? 'bg-red-500' :
-                    type === 'info' ? 'bg-blue-500' : 'bg-gray-500'
+                    type === 'success' ? 'bg-green-500' : 'bg-red-500'
                 } z-50 transition-all duration-300 ease-in-out`;
                 
                 const icon = document.createElement('i');
-                icon.className = type === 'success' ? 'fas fa-check-circle mr-2' : 
-                                type === 'error' ? 'fas fa-exclamation-circle mr-2' :
-                                'fas fa-info-circle mr-2';
+                icon.className = type === 'success' ? 'fas fa-check-circle mr-2' : 'fas fa-exclamation-circle mr-2';
                 toast.appendChild(icon);
                 
                 const text = document.createElement('span');
@@ -1331,23 +1044,6 @@
 
 @push('styles')
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
-<style>
-    .attendance-card {
-        transition: all 0.3s ease;
-    }
-    .attendance-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .fingerprint-scan {
-        animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-        0% { opacity: 0.6; }
-        50% { opacity: 1; }
-        100% { opacity: 0.6; }
-    }
-</style>
 @endpush
 
 @push('scripts')
