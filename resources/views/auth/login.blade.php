@@ -7,9 +7,14 @@
     @vite('resources/css/app.css')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Add CSRF Token for forms -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
+        /* --- NEW STYLE: Background Color Change --- */
+        .light-gray-bg {
+            background-color: #f3f4f6; /* Equivalent to Tailwind's gray-100 */
+        }
+        /* ----------------------------------------- */
+
         .form-container {
             perspective: 1000px;
             position: relative;
@@ -53,9 +58,9 @@
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
         .input-field:focus {
-            border-color: #4f46e5;
+            border-color: #1e3a8a; /* Updated to match sidebar blue */
             outline: none;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1); /* Updated to match sidebar blue */
         }
         .input-icon {
             position: absolute;
@@ -74,20 +79,39 @@
             transition: color 0.3s;
         }
         .password-toggle:hover {
-            color: #4f46e5;
+            color: #1e3a8a; /* Updated to match sidebar blue */
         }
+        
+        /* --- IMPROVED LEFT PANEL STYLES (From previous response) --- */
         .university-bg {
-            background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('assets/images/uni_photo.jpg');
+            /* Lighter overlay to show image */
+            background-image: linear-gradient(rgba(30, 58, 138, 0.7), rgba(30, 58, 138, 0.8)), url('assets/images/uni_photo.jpg'); 
             background-size: cover;
             background-position: center;
         }
+        
+        .btn-primary:hover {
+            background-color: #1d4ed8; /* A standard, lighter Tailwind blue (blue-700/600 equivalent) */
+            transform: translateY(-1px); 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-divider {
+            width: 3rem;
+            height: 3px;
+            background-color: #FFCC00; /* Secondary brand color (gold) */
+            margin: 1rem 0 1.5rem 0;
+            border-radius: 9999px;
+        }
+        /* --------------------------------------------------------- */
+
         .error-message {
             color: #ef4444;
             font-size: 0.875rem;
             margin-top: 0.25rem;
         }
         .btn-primary {
-            background-color: #4f46e5;
+            background-color: #1e3a8a; /* Dark blue from sidebar */
             color: white;
             padding: 0.625rem 1.25rem;
             border-radius: 0.375rem;
@@ -95,7 +119,7 @@
             transition: all 0.3s;
         }
         .btn-primary:hover {
-            background-color: #4338ca;
+            background-color: #FFCC00; /* Lighter blue/Gold for hover */
         }
         .divider {
             display: flex;
@@ -142,41 +166,55 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="container mx-auto px-4">
+<body class="min-h-screen flex items-center justify-center light-gray-bg"> <div class="container mx-auto px-4">
         <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
             <div class="md:flex">
-                <!-- Left Side - University Info -->
-                <div class="hidden md:block md:w-1/2 university-bg p-8 text-white">
+                <div class="hidden md:block md:w-1/2 university-bg p-12 text-white"> 
                     <div class="flex flex-col h-full justify-center">
-                        <h1 class="text-3xl font-bold mb-4">HRMIS Portal</h1>
-                        <p class="mb-6">Human Resource Management Information System</p>
-                        <div class="space-y-4">
-                            <div class="flex items-center">
-                                <i class="fas fa-users text-xl mr-3"></i>
-                                <span>Employee Management</span>
+
+                        <h1 class="text-5xl font-extrabold mb-3 tracking-tight">BiPSU HRMIS</h1>
+                        <div class="feature-divider"></div>
+
+                        <h2 class="text-xl font-light mb-8">Human Resource Management Information System</h2>
+
+                        <div class="space-y-6">
+                            <div class="flex items-start">
+                                <i class="fas fa-users text-2xl mr-4 mt-1 text-yellow-300"></i> <div>
+                                    <h3 class="text-lg font-semibold">Employee Profiles (PDS)</h3>
+                                    <p class="text-sm text-gray-200">Manage comprehensive Personal Data Sheets and records.</p>
+                                </div>
                             </div>
-                            <div class="flex items-center">
-                                <i class="fas fa-calendar-alt text-xl mr-3"></i>
-                                <span>Attendance Tracking</span>
+                            <div class="flex items-start">
+                                <i class="fas fa-calendar-alt text-2xl mr-4 mt-1 text-yellow-300"></i>
+                                <div>
+                                    <h3 class="text-lg font-semibold">Attendance & Timekeeping</h3>
+                                    <p class="text-sm text-gray-200">Accurate tracking of work hours and duty statuses.</p>
+                                </div>
                             </div>
-                            <div class="flex items-center">
-                                <i class="fas fa-file-invoice-dollar text-xl mr-3"></i>
-                                <span>Payroll Processing</span>
+                            <div class="flex items-start">
+                                <i class="fas fa-file-invoice-dollar text-2xl mr-4 mt-1 text-yellow-300"></i>
+                                <div>
+                                    <h3 class="text-lg font-semibold">Leave & Benefits</h3>
+                                    <p class="text-sm text-gray-200">Streamlined application and approval for all leave types.</p>
+                                </div>
                             </div>
+                        </div>
+                        
+                        <div class="mt-auto pt-8 text-center text-sm font-light border-t border-blue-400 opacity-80">
+                            "Weaving BiPSU with the world, and the world with BiPSU."
                         </div>
                     </div>
                 </div>
 
-                <!-- Right Side - Forms -->
                 <div class="w-full md:w-1/2 p-8 form-container">
                     <div class="form-flip" id="formFlip">
-                        <!-- Login Form (Front) -->
                         <div class="form-front">
-                            <div class="flex justify-center mb-6">
-                                <img src="{{ asset('assets/images/uni_logo.png') }}" alt="University Logo" class="h-12">
-                            </div>
-                            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Sign In to Your Account</h2>
+                            <div class="flex flex-col items-center mb-6">
+                                <img src="{{ asset('assets/images/one_bipsu.png') }}" alt="University Logo" class="h-15 mb-2"> 
+                                <span class="text-sm text-blue-400">Together as One, Powered by BiPSU</span>
+                           </div>
+
+                            <h2 class="text-xl font-bold text-gray-800 mb-6 text-center">Sign In to Your Account</h2>
                             
                             <form method="POST" action="{{ route('login') }}" class="space-y-4">
                                 @csrf
@@ -239,14 +277,17 @@
                             </div>
                         </div>
 
-                        <!-- Register Form (Back) -->
                         <div class="form-back absolute top-0 left-0 w-full h-full bg-white p-8">
-                            <div class="flex justify-between items-center mb-6">
-                                <h2 class="text-2xl font-bold text-gray-800">Create New Account</h2>
-                                <button type="button" onclick="flipForm()" class="text-gray-400 hover:text-gray-600">
-                                    <i class="fas fa-times"></i>
+                            <div class="flex justify-between items-start mb-6">
+                                <div class="flex flex-col items-center w-full">
+                                    <img src="{{ asset('assets/images/one_bipsu.png') }}" alt="University Logo" class="h-15 mb-2"> 
+                                    <span class="text-sm text-blue-400">Together as One, Powered by BiPSU</span>
+                                </div>
+                                <button type="button" onclick="flipForm()" class="text-gray-400 hover:text-gray-600 ml-4">
+                                    <i class="fas fa-times text-xl"></i>
                                 </button>
                             </div>
+                            <h2 class="text-xl font-bold text-gray-800 mb-6 text-center">Create New Account</h2>
                             
                             <form method="POST" action="{{ route('register') }}" class="space-y-4">
                                 @csrf
@@ -306,38 +347,38 @@
                                     </div>
                                 </div>
                                 
-                                <div class="input-container">
-                                    <label for="employee_id" class="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
-                                    <div class="relative">
-                                        <i class="fas fa-id-card input-icon"></i>
-                                        <input type="text" id="employee_id" name="employee_id" class="input-field" placeholder="EMP-12345" value="{{ old('employee_id') }}" required>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="input-container">
+                                        <label for="employee_id" class="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
+                                        <div class="relative">
+                                            <i class="fas fa-id-card input-icon"></i>
+                                            <input type="text" id="employee_id" name="employee_id" class="input-field" placeholder="EMP-12345" value="{{ old('employee_id') }}" required>
+                                        </div>
+                                        @error('employee_id')
+                                            <div class="error-message">{{ $message }}</div>
+                                        @enderror
                                     </div>
-                                    @error('employee_id')
-                                        <div class="error-message">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                
-                                <div class="input-container">
-                                    <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                                    <div class="relative">
-                                        <i class="fas fa-building input-icon"></i>
-                                        <select id="department" name="department" class="input-field" required>
-                                            <option value="">Select Department</option>
-                                            <option value="STCS" {{ old('department') == 'STCS' ? 'selected' : '' }}>STCS</option>
-                                            <option value="SOE" {{ old('department') == 'SOE' ? 'selected' : '' }}>SOE</option>
-                                            <option value="STED" {{ old('department') == 'STED' ? 'selected' : '' }}>STED</option>
-                                            <option value="SNHS" {{ old('department') == 'SNHS' ? 'selected' : '' }}>SNHS</option>
-                                            <option value="SCJE" {{ old('department') == 'SCJE' ? 'selected' : '' }}>SCJE</option>
-                                            <option value="SME" {{ old('department') == 'SME' ? 'selected' : '' }}>SME</option>
-                                            <option value="SAS" {{ old('department') == 'SAS' ? 'selected' : '' }}>SAS</option>
-                                        </select>
+                                    
+                                    <div class="input-container">
+                                        <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                                        <div class="relative">
+                                            <i class="fas fa-building input-icon"></i>
+                                            <select id="department" name="department" class="input-field" required>
+                                                <option value="">Select Department</option>
+                                                <option value="STCS" {{ old('department') == 'STCS' ? 'selected' : '' }}>STCS</option>
+                                                <option value="SOE" {{ old('department') == 'SOE' ? 'selected' : '' }}>SOE</option>
+                                                <option value="STED" {{ old('department') == 'STED' ? 'selected' : '' }}>STED</option>
+                                                <option value="SNHS" {{ old('department') == 'SNHS' ? 'selected' : '' }}>SNHS</option>
+                                                <option value="SCJE" {{ old('department') == 'SCJE' ? 'selected' : '' }}>SCJE</option>
+                                                <option value="SME" {{ old('department') == 'SME' ? 'selected' : '' }}>SME</option>
+                                                <option value="SAS" {{ old('department') == 'SAS' ? 'selected' : '' }}>SAS</option>
+                                            </select>
+                                        </div>
+                                        @error('department')
+                                            <div class="error-message">{{ $message }}</div>
+                                        @enderror
                                     </div>
-                                    @error('department')
-                                        <div class="error-message">{{ $message }}</div>
-                                    @enderror
                                 </div>
-                                
-                              
                                 
                                 <div class="input-container">
                                     <label class="form-checkbox">
@@ -386,8 +427,11 @@
         }
 
         // Auto-flip to register form if there are register errors
-        @if($errors->has('name') || $errors->has('email') || $errors->has('password') || $errors->has('employee_id') || $errors->has('department') || $errors->has('role'))
+        @if($errors->has('name') || $errors->has('email') || $errors->has('password') || $errors->has('employee_id') || $errors->has('department') || $errors->has('terms'))
             document.addEventListener('DOMContentLoaded', function() {
+                // Check if any of the registration errors exist and flip if necessary
+                // Note: Your original code checked 'role', which isn't in the registration form fields shown, 
+                // I've kept the error fields relevant to the visible form.
                 flipForm();
             });
         @endif

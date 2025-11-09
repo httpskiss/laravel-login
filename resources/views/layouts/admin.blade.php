@@ -15,6 +15,7 @@
         .sidebar {
             transition: all 0.3s ease;
             width: 250px;
+            z-index: 40;
         }
         
         .sidebar.collapsed {
@@ -43,6 +44,7 @@
                 position: fixed;
                 z-index: 50;
                 height: 100vh;
+                width: 250px;
             }
             
             .sidebar.mobile-open {
@@ -68,216 +70,280 @@
             }
         }
         
-        /* Prevent logo from squishing */
-        .sidebar-logo {
-            min-width: 40px; /* Same width as collapsed sidebar minus padding */
+        /* Logo Styling */
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem 0.5rem;
             transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar-logo {
+            transition: all 0.3s ease;
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .sidebar.collapsed .logo-container {
+            padding: 1rem 0.25rem;
         }
         
         .sidebar.collapsed .sidebar-logo {
-            min-width: 40px;
-            padding: 0.5rem;
+            height: 40px;
+            width: auto;
         }
-
-            .sidebar-logo-container {
-            width: 180px; /* Width when sidebar is expanded */
+        
+        /* Navigation Items */
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin: 0.25rem 0.5rem;
+            transition: all 0.2s ease;
+            white-space: nowrap;
             overflow: hidden;
         }
-
-        .sidebar.collapsed .sidebar-logo-container {
-            width: 40px; /* Width when sidebar is collapsed */
+        
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-item.active {
+            background-color: rgb(255, 255, 255);
+        }
+        
+        .nav-icon {
+            min-width: 1.5rem;
+            text-align: center;
+            margin-right: 0.75rem;
+        }
+        
+        .sidebar.collapsed .nav-icon {
+            margin-right: 0;
         }
 
-        /* Ensure smooth transition */
-        .sidebar-logo-container img {
+        /* Collapse Button */
+        .collapse-btn {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0.75rem 1rem;
+            margin: 1rem 0.5rem;
+            border-radius: 0.75rem;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            min-height: 44px;
+            width: calc(100% - 1rem); /* This ensures it stays within the sidebar */
+    box-sizing: border-box; /* Ensures padding and border are included in width */
+        }
+
+        .collapse-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .collapse-btn:active {
+            transform: translateY(0);
+        }
+
+        .sidebar.collapsed .collapse-btn {
+            justify-content: center;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            width: calc(100% - 1rem); /* Maintain consistent width when collapsed */
+        }
+
+        .collapse-btn i {
+            transition: transform 0.3s ease;
+            font-size: 0.9rem;
+            
+        }
+
+        .sidebar.collapsed .collapse-btn i {
+            transform: rotate(180deg);
+        }
+        
+        /* Overlay for mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 45;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar-overlay.mobile-open {
+                display: block;
+            }
+        }
+
+        /* Custom styles for attendance system */
+        .biometric-placeholder {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        .attendance-card {
             transition: all 0.3s ease;
         }
 
-        /* Adjust logo size in collapsed state */
-        .sidebar.collapsed .sidebar-logo-container img {
-            height: 36px; /* Slightly smaller in collapsed state */
-            width: auto;
+        .attendance-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
 
-        /* Mobile adjustments */
-        @media (max-width: 768px) {
-            .sidebar-logo-container {
-                width: 180px;
-            }
-            
-            .sidebar.mobile-open .sidebar-logo-container {
-                width: 180px;
-            }
+        .status-present {
+            background-color: #d1fae5;
+            color: #065f46;
         }
 
+        .status-absent {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
 
-    /* Custom styles for attendance system */
-    .biometric-placeholder {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    }
+        .status-late {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
 
-    .attendance-card {
-        transition: all 0.3s ease;
-    }
+        .status-leave {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
 
-    .attendance-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    }
+        .qr-scanner {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            border: 3px dashed #3b82f6;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
 
-    .status-present {
-        background-color: #d1fae5;
-        color: #065f46;
-    }
+        .qr-scanner video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
-    .status-absent {
-        background-color: #fee2e2;
-        color: #991b1b;
-    }
-
-    .status-late {
-        background-color: #fef3c7;
-        color: #92400e;
-    }
-
-    .status-leave {
-        background-color: #dbeafe;
-        color: #1e40af;
-    }
-
-    .qr-scanner {
-        position: relative;
-        width: 300px;
-        height: 300px;
-        margin: 0 auto;
-        border: 3px dashed #3b82f6;
-        border-radius: 8px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        overflow: hidden;
-    }
-
-    .qr-scanner video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .qr-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.3);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: white;
-        font-size: 1.2rem;
-    }
+        .qr-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.2rem;
+        }
     </style>
+    
 </head>
-<body class="bg-gray-100">
+<body class="bg-white-100">
     <div class="flex h-screen">
         <!-- Mobile menu button (hidden on desktop) -->
-        <button id="mobileMenuBtn" class="md:hidden fixed top-4 left-4 z-50 p-2 bg-blue-800 text-white rounded-lg">
+        <button id="mobileMenuBtn" class="md:hidden fixed top-4 left-4 z-50 p-2 bg-blue-800 text-white rounded-lg shadow-md">
             <i class="fas fa-bars"></i>
         </button>
 
-        <div id="sidebar" class="sidebar bg-blue-800 text-white fixed h-full overflow-y-auto">
-            <div class="p-4 flex items-center">
-                <div class="flex items-center space-x-3">
-                    <img src="{{ asset('assets/images/uni_logo.png') }}" alt="BIPSU Logo" 
-                        class="h-12 w-auto object-contain max-w-full transition-all duration-300">
-                    <span class="logo-text text-xl font-bold whitespace-nowrap">eHRMIS</span>
-                </div>
+        <!-- Mobile overlay -->
+        <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar bg-blue-950 text-white fixed h-full overflow-y-auto">
+            <!-- Logo Section - Centered -->
+            <div class="logo-container">
+                <img src="{{ asset('assets/images/one_bipsu.png') }}" alt="BIPSU Logo" 
+                    class="sidebar-logo h-12 w-auto object-contain">
             </div>
-            <nav class="mt-6">
-                <div class="px-4 py-2">
-                    <a href="{{ route('admin.dashboard') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
-                        <i class="fas fa-home mr-3"></i>
-                        <span class="nav-text">Dashboard</span>
-                    </a>
-                </div>
-                 <div class="px-4 py-2">
-                    <a href="{{ route('admin.employees') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
-                        <i class="fas fa-users mr-3"></i>
-                        <span class="nav-text">Employees</span>
-                    </a>
-                </div>
-                <div class="px-4 py-2">
-                    <a href="{{ route('admin.attendance') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
-                        <i class="fas fa-calendar-alt mr-3"></i>
-                        <span class="nav-text">Attendance</span>
-                    </a>
-                </div>
-                <div class="px-4 py-2">
-                    <a href="{{ route('admin.leaves') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
-                        <i class="fas fa-calendar-minus mr-3"></i>
-                        <span class="nav-text">Leave</span>
-                    </a>
-                </div>
-                <div class="px-4 py-2">
-                    <a href="{{ route('admin.travel') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
-                        <i class="fas fa-plane mr-3"></i>
-                        <span class="nav-text">Travel</span>
-                    </a>
-                </div>
-                <div class="px-4 py-2">
-                    <a href="{{ route('admin.payroll') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
-                        <i class="fas fa-money-bill-wave mr-3"></i>
-                        <span class="nav-text">Payroll</span>
-                    </a>
-                </div>
-                <div class="px-4 py-2">
-                    <a href="{{ route('admin.pds') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
-                        <i class="fas fa-id-card mr-3"></i>
-                        <span class="nav-text">PDS</span>
-                    </a>
-                </div>
-                <div class="px-4 py-2">
-                    <a href="{{ route('admin.saln') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
-                        <i class="fas fa-file-contract mr-3"></i>
-                        <span class="nav-text">SALN</span>
-                    </a>
-                </div>
-                <div class="px-4 py-2">
-                    <a href="{{ route('admin.reports') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
-                        <i class="fas fa-chart-line mr-3"></i>
-                        <span class="nav-text">Reports</span>
-                    </a>
-                </div>
-                <div class="px-4 py-2">
-                    <a href="{{ route('admin.settings') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">
-                        <i class="fas fa-cog mr-3"></i>
-                        <span class="nav-text">Settings</span>
-                    </a>
-                </div>
+            
+            <!-- Navigation Menu -->
+            <nav class="mt-2">
+                <a href="{{ route('admin.dashboard') }}" class="nav-item">
+                    <i class="fas fa-home nav-icon"></i>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                <a href="{{ route('admin.employees') }}" class="nav-item">
+                    <i class="fas fa-users nav-icon"></i>
+                    <span class="nav-text">Employees</span>
+                </a>
+                <a href="{{ route('admin.attendance') }}" class="nav-item">
+                    <i class="fas fa-calendar-alt nav-icon"></i>
+                    <span class="nav-text">Attendance</span>
+                </a>
+                <a href="{{ route('admin.leaves') }}" class="nav-item">
+                    <i class="fas fa-calendar-minus nav-icon"></i>
+                    <span class="nav-text">Leave</span>
+                </a>
+                <a href="{{ route('admin.travel') }}" class="nav-item">
+                    <i class="fas fa-plane nav-icon"></i>
+                    <span class="nav-text">Travel</span>
+                </a>
+                <a href="{{ route('admin.payroll') }}" class="nav-item">
+                    <i class="fas fa-money-bill-wave nav-icon"></i>
+                    <span class="nav-text">Payroll</span>
+                </a>
+                <a href="{{ route('admin.pds') }}" class="nav-item">
+                    <i class="fas fa-id-card nav-icon"></i>
+                    <span class="nav-text">PDS</span>
+                </a>
+                <a href="{{ route('admin.saln') }}" class="nav-item">
+                    <i class="fas fa-file-contract nav-icon"></i>
+                    <span class="nav-text">SALN</span>
+                </a>
+                <a href="{{ route('admin.reports') }}" class="nav-item">
+                    <i class="fas fa-chart-line nav-icon"></i>
+                    <span class="nav-text">Reports</span>
+                </a>
+                <a href="{{ route('admin.settings') }}" class="nav-item">
+                    <i class="fas fa-cog nav-icon"></i>
+                    <span class="nav-text">Settings</span>
+                </a>
             </nav>
-            <div class="p-4">
-                <button id="toggleSidebar" class="w-full flex items-center justify-center py-2 bg-blue-700 rounded-lg">
-                    <i class="fas fa-chevron-left"></i>
-                    <span class="nav-text ml-2">Collapse</span>
+        
+            <!-- Collapse Button -->
+            <div class="mt-auto border-t border-gray-700 pt-2">
+                <button id="toggleSidebar" class="collapse-btn w-full">
+                    <i class="fas fa-chevron-left nav-icon"></i>
+                    <span class="nav-text ml-3">Collapse</span>
                 </button>
             </div>
         </div>
 
-         <!-- Main Content -->
+        <!-- Main Content -->
         <div class="main-content flex-1 overflow-auto">
-            <header class="bg-white shadow-sm">
+            <header class="bg-blue-950 shadow-sm">
                 <div class="flex justify-between items-center p-4">
-                    <h1 class="text-2xl font-semibold text-gray-800">@yield('title')</h1>
+                    <h1 class="text-2xl font-semibold text-white">@yield('title')</h1>
                     
                     <div class="flex items-center space-x-4">
                         <div class="dropdown relative">
                             <div class="flex items-center cursor-pointer">
                                 <img src="{{ auth()->user()->profile_photo_url }}" alt="Profile" class="w-8 h-8 rounded-full">
-                                <span class="ml-2 text-gray-700">
+                                <span class="ml-2 text-white">
                                     {{ auth()->user()->first_name }} {{ auth()->user()->last_name }}
                                 </span>
-                                <i class="fas fa-chevron-down ml-1 text-gray-600 text-xs"></i>
+                                <i class="fas fa-chevron-down ml-1 text-white text-xs"></i>
                             </div>
                             <div class="dropdown-menu absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden">
                                 <a href="{{ route('profile.show') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-blue-700">Profile</a>
@@ -356,7 +422,10 @@
             // Mobile sidebar toggle
             const toggleMobileSidebar = () => {
                 const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                
                 sidebar.classList.toggle('mobile-open');
+                overlay.classList.toggle('mobile-open');
                 
                 // On mobile, we don't want the collapsed state when opening
                 if (sidebar.classList.contains('mobile-open')) {
@@ -364,11 +433,21 @@
                 }
             };
             
+            // Close mobile sidebar when clicking overlay
+            const closeMobileSidebar = () => {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('mobile-open');
+            };
+            
             // Initialize sidebar state from localStorage
             const initializeSidebar = () => {
                 const sidebar = document.getElementById('sidebar');
                 const toggleBtn = document.getElementById('toggleSidebar');
                 const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+                const overlay = document.getElementById('sidebarOverlay');
                 
                 if (!sidebar || !toggleBtn) return;
                 
@@ -391,27 +470,20 @@
                     mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
                 }
                 
-                // Close mobile sidebar when clicking outside
-                document.addEventListener('click', function(e) {
-                    const sidebar = document.getElementById('sidebar');
-                    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-                    
-                    if (window.innerWidth <= 768 && 
-                        !e.target.closest('#sidebar') && 
-                        !e.target.closest('#mobileMenuBtn') &&
-                        sidebar.classList.contains('mobile-open')) {
-                        sidebar.classList.remove('mobile-open');
-                    }
-                });
+                if (overlay) {
+                    overlay.addEventListener('click', closeMobileSidebar);
+                }
             };
             
             // Handle window resize
             const handleResize = () => {
                 const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
                 
                 if (window.innerWidth > 768) {
                     // Desktop - remove mobile-open class if it exists
                     sidebar.classList.remove('mobile-open');
+                    overlay.classList.remove('mobile-open');
                 } else {
                     // Mobile - ensure sidebar is hidden by default
                     if (!sidebar.classList.contains('mobile-open')) {

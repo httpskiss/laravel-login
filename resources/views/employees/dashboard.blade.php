@@ -18,8 +18,9 @@
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
         }
         
+        /* Updated gradient to match sidebar blue */
         .gradient-bg {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
         }
         
         .scrollbar-hide::-webkit-scrollbar {
@@ -32,7 +33,7 @@
         }
         
         .glow-on-hover:hover {
-            filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.5));
+            filter: drop-shadow(0 0 8px rgba(30, 58, 138, 0.5)); /* Updated to sidebar blue */
         }
         
         .status-indicator {
@@ -53,6 +54,23 @@
         
         .status-absent {
             background-color: #EF4444;
+        }
+        
+        /* Updated pulse animation for sidebar blue */
+        .pulse {
+            animation: pulse-blue 2s infinite;
+        }
+        
+        @keyframes pulse-blue {
+            0% {
+                box-shadow: 0 0 0 0 rgba(30, 58, 138, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(30, 58, 138, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(30, 58, 138, 0);
+            }
         }
     </style>
 

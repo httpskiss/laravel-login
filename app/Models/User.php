@@ -103,9 +103,19 @@ class User extends Authenticatable
         return $this->hasOne(Attendance::class)->today();
     }
     
-    public function leaves(): HasMany
+     public function leaves()
     {
         return $this->hasMany(Leave::class);
+    }
+
+    public function leaveBalances()
+    {
+        return [
+            'vacation' => 15, // This should come from database in real implementation
+            'sick' => 10,
+            'emergency' => 5,
+            'special' => 30
+        ];
     }
 
     public function events(): BelongsToMany
@@ -114,5 +124,7 @@ class User extends Authenticatable
             ->withPivot('status')
             ->withTimestamps();
     }
+
+    
     
 }

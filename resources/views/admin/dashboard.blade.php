@@ -19,7 +19,7 @@
         }
         
        .gradient-bg {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
         }
         
         .scrollbar-hide::-webkit-scrollbar {
