@@ -28,6 +28,8 @@ class User extends Authenticatable
         'profile_photo_path',
         'user_status',
         'hire_date',
+        'provider',
+        'provider_id',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -70,11 +72,7 @@ class User extends Authenticatable
             'bold' => 'true',
             'format' => 'png'
         ]);
-
-
     }
-
-    
 
     public function getRoleAttribute()
     {
@@ -91,9 +89,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(Task::class);
     }
-    
-  // Add this to the User model
-    public function attendances()
+
+    public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class);
     }
@@ -103,18 +100,46 @@ class User extends Authenticatable
         return $this->hasOne(Attendance::class)->today();
     }
     
-     public function leaves()
+    // Leave relationships
+    public function leaves(): HasMany
     {
         return $this->hasMany(Leave::class);
     }
 
-    public function leaveBalances()
+    public function handoverLeaves(): HasMany
     {
+        return $this->hasMany(Leave::class, 'handover_person_id');
+    }
+
+    public function approvedLeaves(): HasMany
+    {
+        return $this->hasMany(Leave::class, 'approved_by');
+    }
+
+    /**
+     * Calculate leave balances for the user
+     */
+    public function leaveBalances(): array
+    {
+        $currentYear = now()->year;
+        
+        $usedVacation = $this->leaves()
+            ->where('type', Leave::TYPE_VACATION)
+            ->where('status', Leave::STATUS_APPROVED)
+            ->whereYear('created_at', $currentYear)
+            ->sum('days');
+
+        $usedSick = $this->leaves()
+            ->where('type', Leave::TYPE_SICK)
+            ->where('status', Leave::STATUS_APPROVED)
+            ->whereYear('created_at', $currentYear)
+            ->sum('days');
+
         return [
-            'vacation' => 15, // This should come from database in real implementation
-            'sick' => 10,
-            'emergency' => 5,
-            'special' => 30
+            'vacation' => 15 - $usedVacation, // 15 days per year
+            'sick' => 15 - $usedSick,         // 15 days per year
+            'used_vacation' => $usedVacation,
+            'used_sick' => $usedSick,
         ];
     }
 
@@ -124,7 +149,4 @@ class User extends Authenticatable
             ->withPivot('status')
             ->withTimestamps();
     }
-
-    
-    
 }

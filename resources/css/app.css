@@ -1,5 +1,12 @@
 @import 'tailwindcss';
 @import "tailwindcss";
+@import './leaves.css';
+@import './layout-sidebar.css';
+@import './attendance.css';
+@import './payroll.css';
+@import './dashboard.css';
+@import './auth.css';
+@import './calendar.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';

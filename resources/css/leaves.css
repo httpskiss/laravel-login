@@ -1,0 +1,58 @@
+/* Leave Form Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Leave Option Selection */
+.leave-option.selected {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
+}
+
+/* Progress Bar Animation */
+.progress-bar {
+    transition: all 0.3s ease;
+}
+
+/* Form Section Transitions */
+.form-section {
+    transition: all 0.3s ease;
+}
+
+.form-section.hidden {
+    display: none;
+}
+
+/* Floating Label Animation */
+.floating-label {
+    transform-origin: left top;
+    transition: all 0.2s ease;
+}
+
+input:focus + .floating-label,
+input:not(:placeholder-shown) + .floating-label {
+    transform: translateY(-1.5rem) scale(0.85);
+    color: #3b82f6;
+}
+
+/* Conditional Section Visibility */
+.conditional-section {
+    display: none;
+}
+
+.conditional-section.active {
+    display: block;
+    animation: fadeIn 0.3s ease-out;
+}

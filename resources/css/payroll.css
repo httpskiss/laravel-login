@@ -1,0 +1,121 @@
+/* Payroll Page Styles */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Card Styles */
+.leave-card {
+    transition: all 0.3s ease;
+}
+
+.leave-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 9999px;
+    font-weight: 500;
+}
+
+.status-approved {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.status-pending {
+    background-color: #fef9c3;
+    color: #854d0e;
+}
+
+.status-rejected {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.status-cancelled {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+
+/* Leave Type Badges */
+.type-vacation {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.type-sick {
+    background-color: #f3e8ff;
+    color: #6b21a8;
+}
+
+.type-emergency {
+    background-color: #ffedd5;
+    color: #9a3412;
+}
+
+.type-maternity {
+    background-color: #fce7f3;
+    color: #9d174d;
+}
+
+.type-paternity {
+    background-color: #cffafe;
+    color: #155e75;
+}
+
+/* Academic Leave Types */
+.type-conference {
+    background-color: #e0f2fe;
+    color: #0369a1;
+}
+
+.type-research {
+    background-color: #ecfccb;
+    color: #3f6212;
+}
+
+.type-sabbatical {
+    background-color: #f5f5f4;
+    color: #57534e;
+}
+
+/* Leave Balance Cards */
+.balance-card {
+    border-left: 4px solid;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .filter-grid {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .filter-grid > div {
+        width: 100%;
+    }
+    
+    .action-buttons {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}

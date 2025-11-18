@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Leave;
 
 use App\Http\Controllers\Controller;
@@ -9,162 +10,164 @@ use Illuminate\Support\Facades\Auth;
 
 class EmployeeLeaveController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $leaves = Leave::where('user_id', auth()->id())
-            ->with('user')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-            
-        return view('employees.leaves', compact('leaves'));
+        $query = Auth::user()->leaves()->latest();
+
+        // Apply filters
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->type) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->month) {
+            $query->whereMonth('start_date', \Carbon\Carbon::parse($request->month)->month)
+                  ->whereYear('start_date', \Carbon\Carbon::parse($request->month)->year);
+        }
+
+        $leaves = $query->paginate(10);
+        $leaveBalances = Auth::user()->leaveBalances();
+        
+        return view('employees.leaves.index', compact('leaves', 'leaveBalances'));
     }
 
     public function create()
     {
-        return view('employees.leaves-create');
+        $user = Auth::user();
+        $colleagues = User::where('department', $user->department)
+                         ->where('id', '!=', $user->id)
+                         ->where('user_status', 'Active')
+                         ->get();
+                         
+        return view('employees.leaves.create', [
+            'leaveBalances' => $user->leaveBalances(),
+            'colleagues' => $colleagues
+        ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            // Section 1-5
-            'department' => 'required|string',
-            'filing_date' => 'required|date',
-            'position' => 'required|string',
-            'salary' => 'required|numeric',
-            
-            // Section 6.A
-            'type' => 'required|in:vacation,mandatory,sick,maternity,paternity,special_privilege,solo_parent,study,vawc,rehabilitation,special_women,emergency,adoption,monetization,terminal,other',
-            
-            // Section 6.B (dynamic validation based on type)
-            'leave_location' => 'nullable|string',
-            'abroad_specify' => 'nullable|string',
-            'sick_type' => 'nullable|string',
-            'hospital_illness' => 'nullable|string',
-            'outpatient_illness' => 'nullable|string',
-            'special_women_illness' => 'nullable|string',
-            'study_purpose' => 'nullable|string',
-            'other_purpose_specify' => 'nullable|string',
-            'emergency_details' => 'nullable|string',
-            'other_leave_details' => 'nullable|string',
-            
-            // Section 6.C & 6.D
-            'days' => 'required|numeric|min:0.5',
-            'commutation' => 'required|in:requested,not_requested',
-            'start_date' => 'required|date|after_or_equal:today',
+            'type' => 'required|string',
+            'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
-            'reason' => 'required|string|min:10',
-            'signature_data' => 'required|string',
+            'days' => 'required|numeric|min:0.5',
+            'reason' => 'required|string|max:1000',
+            'commutation' => 'required|in:requested,not_requested',
+            'emergency_contact_name' => 'nullable|string',
+            'emergency_contact_phone' => 'nullable|string',
+            'emergency_contact_relationship' => 'nullable|string',
+            'handover_person_id' => 'nullable|exists:users,id',
+            'handover_notes' => 'nullable|string',
+            'medical_certificate' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+            'travel_itinerary' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
 
-        // Add user_id and default status
-        $validated['user_id'] = auth()->id();
-        $validated['status'] = 'pending';
-
-        // Calculate leave credits (this should be more sophisticated in production)
-        $user = auth()->user();
-        $leaveBalances = $user->leaveBalances();
-        
-        if ($validated['type'] == 'vacation' || $validated['type'] == 'mandatory' || $validated['type'] == 'special_privilege') {
-            $validated['vacation_less'] = $validated['days'];
-            $validated['vacation_balance'] = $leaveBalances['vacation'] - $validated['days'];
-        } elseif ($validated['type'] == 'sick') {
-            $validated['sick_less'] = $validated['days'];
-            $validated['sick_balance'] = $leaveBalances['sick'] - $validated['days'];
-        }
-
-        $validated['vacation_earned'] = $leaveBalances['vacation'];
-        $validated['sick_earned'] = $leaveBalances['sick'];
-        $validated['credit_as_of_date'] = now();
-
         try {
-            Leave::create($validated);
-            return redirect()->route('employees.leaves')->with('success', 'Leave application submitted successfully!');
+            $leave = new Leave();
+            $leave->user_id = Auth::id();
+            $leave->department = Auth::user()->department;
+            $leave->filing_date = now();
+            $leave->position = Auth::user()->role;
+            $leave->salary = 0;
+            $leave->fill($validated);
+            
+            // Handle file uploads
+            if ($request->hasFile('medical_certificate')) {
+                $leave->medical_certificate_path = $request->file('medical_certificate')->store('medical_certificates');
+            }
+            
+            if ($request->hasFile('travel_itinerary')) {
+                $leave->travel_itinerary_path = $request->file('travel_itinerary')->store('travel_itineraries');
+            }
+            
+            $leave->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Leave application submitted successfully!',
+                'leave' => $leave
+            ]);
+
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to submit leave application. Please try again.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to submit leave application: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     public function show(Leave $leave)
     {
-        // Ensure user can only view their own leaves
-        if ($leave->user_id !== auth()->id()) {
+        // Ensure the user can only view their own leaves
+        if ($leave->user_id !== Auth::id()) {
             abort(403);
         }
+
+        $leave->load(['handoverPerson', 'approvedBy']);
+        $html = view('employees.leaves.partials.details', compact('leave'))->render();
         
-        return view('employees.leaves-show', compact('leave'));
+        return response()->json([
+            'success' => true,
+            'html' => $html
+        ]);
     }
 
-    public function cancel(Request $request, Leave $leave)
+    public function destroy(Leave $leave)
     {
-        if ($leave->user_id !== auth()->id()) {
-            abort(403);
+        // Ensure the user can only delete their own pending leaves
+        if ($leave->user_id !== Auth::id() || $leave->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'You can only delete pending leave applications.'
+            ], 403);
         }
 
-        if ($leave->status !== 'pending') {
-            return redirect()->back()->with('error', 'Only pending leave applications can be cancelled.');
-        }
-
-        $leave->update(['status' => 'cancelled']);
-
-        return redirect()->route('employees.leaves')->with('success', 'Leave application cancelled successfully.');
-    }
-
-    // NEW METHODS FOR LEAVE APPLICATION HISTORY
-
-    /**
-     * Show leave application details for modal (AJAX)
-     */
-    public function showDetails($id)
-    {
-        $application = Leave::where('id', $id)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
-
-        if (request()->ajax()) {
-            $html = view('employees.partials.leave-application-details', compact('application'))->render();
+        try {
+            $leave->delete();
             
             return response()->json([
                 'success' => true,
-                'html' => $html
+                'message' => 'Leave application deleted successfully!'
             ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete leave application: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Cancel a pending leave application
+     */
+    public function cancel(Leave $leave)
+    {
+        // Ensure the user can only cancel their own pending leaves
+        if ($leave->user_id !== Auth::id() || $leave->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'You can only cancel pending leave applications.'
+            ], 403);
         }
 
-        return view('employees.leave-details', compact('application'));
-    }
+        try {
+            $leave->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Leave application cancelled successfully!'
+            ]);
 
-    /**
-     * Cancel leave application via AJAX
-     */
-    public function cancelApplication($id)
-    {
-        $application = Leave::where('id', $id)
-            ->where('user_id', auth()->id())
-            ->where('status', 'pending')
-            ->firstOrFail();
-
-        $application->update([
-            'status' => 'cancelled',
-            'cancelled_at' => now()
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Application cancelled successfully'
-        ]);
-    }
-
-    /**
-     * Get leave balances for the current user
-     */
-    private function getLeaveBalances()
-    {
-        // This should be replaced with your actual leave balance calculation
-        return [
-            'vacation' => 15,
-            'sick' => 10,
-            'maternity' => 105,
-            'paternity' => 7
-        ];
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to cancel leave application: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

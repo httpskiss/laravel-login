@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BiPSU HRMIS - Login & Register</title>
+    <title>BiPSU HRMIS</title>
     @vite('resources/css/app.css')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
-        /* --- NEW STYLE: Background Color Change --- */
+        /* --- BiPSU Theme Gradient Background --- */
         .light-gray-bg {
-            background-color: #f3f4f6; /* Equivalent to Tailwind's gray-100 */
+            background: linear-gradient(135deg, #fef5cc 0%, #d4e4ff 50%, #fef0b3 100%);
+            /* Vibrant blend of yellow and blue matching BiPSU colors */
         }
-        /* ----------------------------------------- */
+        /* ------------------------------------------------- */
 
         .form-container {
             perspective: 1000px;
@@ -192,7 +193,7 @@
                                 </div>
                             </div>
                             <div class="flex items-start">
-                                <i class="fas fa-file-invoice-dollar text-2xl mr-4 mt-1 text-yellow-300"></i>
+                                <i class="fas fa-file-invoice-dollar text-2xl mr-4 mt-1 tezxt-yellow-300"></i>
                                 <div>
                                     <h3 class="text-lg font-semibold">Leave & Benefits</h3>
                                     <p class="text-sm text-gray-200">Streamlined application and approval for all leave types.</p>
@@ -261,12 +262,12 @@
                             </div>
                             
                             <div class="grid grid-cols-2 gap-3">
-                                <button type="button" class="social-btn">
+                                <a href="{{ route('social.login', 'google') }}" class="social-btn flex items-center justify-center">
                                     <i class="fab fa-google text-red-500 mr-2"></i> Google
-                                </button>
-                                <button type="button" class="social-btn">
-                                    <i class="fab fa-microsoft text-blue-500 mr-2"></i> Microsoft
-                                </button>
+                                </a>
+                                <a href="{{ route('social.login', 'facebook') }}" class="social-btn flex items-center justify-center">
+                                    <i class="fab fa-facebook text-blue-700 mr-2"></i> Facebook
+                                </a>
                             </div>
                             
                             <div class="mt-6 text-center">
@@ -436,5 +437,7 @@
             });
         @endif
     </script>
+
+    @include('components.chatbot')
 </body>
 </html>

@@ -1331,23 +1331,7 @@
 
 @push('styles')
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
-<style>
-    .attendance-card {
-        transition: all 0.3s ease;
-    }
-    .attendance-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .fingerprint-scan {
-        animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-        0% { opacity: 0.6; }
-        50% { opacity: 1; }
-        100% { opacity: 0.6; }
-    }
-</style>
+
 @endpush
 
 @push('scripts')

@@ -3,58 +3,6 @@
 @section('title', 'Admin Dashboard')
 
 @section('content')
-    <style>
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-out forwards;
-        }
-        
-        .quick-action-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-        
-       .gradient-bg {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-        }
-        
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-        
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        
-        .glow-on-hover:hover {
-            filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.5));
-        }
-        
-        .status-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-        }
-        
-        .status-present {
-            background-color: #10B981;
-        }
-        
-        .status-late {
-            background-color: #F59E0B;
-        }
-        
-        .status-absent {
-            background-color: #EF4444;
-        }
-    </style>
 
 <main class="p-4 md:p-6">
     <!-- Welcome Banner -->

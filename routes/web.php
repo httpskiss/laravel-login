@@ -10,14 +10,22 @@ use App\Http\Controllers\Attendance\AdminAttendanceController;
 use App\Http\Controllers\Attendance\EmployeeAttendanceController;
 use App\Http\Controllers\Leave\AdminLeaveController;
 use App\Http\Controllers\Leave\EmployeeLeaveController;
+use App\Http\Controllers\Travel\AdminTravelController;
+use App\Http\Controllers\Travel\EmployeeTravelController;
+use App\Http\Controllers\Complaints\EmployeeComplaintController;
+use App\Http\Controllers\Complaints\AdminComplaintController;
 use App\Http\Controllers\Employee\EmployeeController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\TasksController;
-use App\Http\Controllers\TravelController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Auth\SocialLoginController;
+
+// Social Login Routes
+Route::get('auth/{provider}', [SocialLoginController::class, 'redirectToProvider'])->name('social.login');
+Route::get('auth/{provider}/callback', [SocialLoginController::class, 'handleProviderCallback'])->name('social.callback');
 
 // Redirect root URL to appropriate dashboard
 Route::get('/', function () {
@@ -54,7 +62,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Dashboard routes
 Route::middleware(['auth', 'verified'])->group(function () {
     // Admin routes
-    Route::prefix('admin')->middleware(['auth', 'verified', 'role:Super Admin|HR Manager'])->group(function () {
+    Route::prefix('admin')->middleware(['role:Super Admin|HR Manager'])->group(function () {
         // Dashboard
         Route::get('/dashboard', [AdminDashboardController::class, 'adminDashboard'])->name('admin.dashboard');
         
@@ -70,9 +78,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/{employee}/upload-photo', [EmployeeController::class, 'uploadPhoto'])->name('admin.employees.upload-photo');
         });
 
-
         // Admin attendance routes
-        Route::prefix('/attendance')->group(function () {
+        Route::prefix('attendance')->group(function () {
             Route::get('/', [AdminAttendanceController::class, 'index'])->name('admin.attendance');
             Route::post('/', [AdminAttendanceController::class, 'store'])->name('admin.attendance.store');
             Route::get('/departments/data', [AdminAttendanceController::class, 'getDepartmentData'])->name('admin.attendance.departments.data');
@@ -83,30 +90,41 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/export', [AdminAttendanceController::class, 'export'])->name('admin.attendance.export');
         });
 
-// Employee attendance routes
-Route::prefix('employee/attendance')->group(function () {
-    Route::get('/', [EmployeeAttendanceController::class, 'index'])->name('employee.attendance');
-    Route::post('/check', [EmployeeAttendanceController::class, 'check'])->name('employee.attendance.check');
-    Route::post('/regularization', [EmployeeAttendanceController::class, 'regularization'])->name('employee.attendance.regularization');
-    Route::get('/all', [EmployeeAttendanceController::class, 'allRecords'])->name('employee.attendance.all');
-});
-        
-
         // Admin leave routes
         Route::prefix('leaves')->group(function () {
             Route::get('/', [AdminLeaveController::class, 'index'])->name('admin.leaves');
+            Route::get('/index', [AdminLeaveController::class, 'index'])->name('admin.leaves.index');
+            Route::get('/create', [AdminLeaveController::class, 'create'])->name('admin.leaves.create');
+            Route::post('/', [AdminLeaveController::class, 'store'])->name('admin.leaves.store');
             Route::get('/{leave}', [AdminLeaveController::class, 'show'])->name('admin.leaves.show');
-            Route::post('/{leave}/status', [AdminLeaveController::class, 'updateStatus'])->name('admin.leaves.update-status');
+            Route::get('/{leave}/edit', [AdminLeaveController::class, 'edit'])->name('admin.leaves.edit');
+            Route::put('/{leave}', [AdminLeaveController::class, 'update'])->name('admin.leaves.update');
             Route::delete('/{leave}', [AdminLeaveController::class, 'destroy'])->name('admin.leaves.destroy');
+            Route::post('/{leave}/approve', [AdminLeaveController::class, 'approve'])->name('admin.leaves.approve');
+            Route::post('/{leave}/reject', [AdminLeaveController::class, 'reject'])->name('admin.leaves.reject');
+            Route::post('/{leave}/cancel', [AdminLeaveController::class, 'cancel'])->name('admin.leaves.cancel');
+            Route::get('/export', [AdminLeaveController::class, 'export'])->name('admin.leaves.export');
+            Route::get('/report', [AdminLeaveController::class, 'report'])->name('admin.leaves.report');
         });
 
-        
+        // Admin travel routes
+        Route::prefix('travel')->group(function () {
+            Route::get('/', [AdminTravelController::class, 'index'])->name('admin.travel');
+            Route::get('/{travel}', [AdminTravelController::class, 'show'])->name('admin.travel.show');
+            Route::post('/{travel}/approve/{step}', [AdminTravelController::class, 'approveStep'])->name('admin.travel.approve');
+            Route::get('/export', [AdminTravelController::class, 'export'])->name('admin.travel.export');
+            Route::get('/report', [AdminTravelController::class, 'report'])->name('admin.travel.report');
+        });
 
-        
-        Route::get('/travel', function () {
-            return view('admin.travel');
-        })->name('admin.travel');
-        
+        // Admin complaints routes
+        Route::prefix('complaints')->group(function () {
+            Route::get('/', [AdminComplaintController::class, 'index'])->name('admin.complaints.index');
+            Route::get('/{complaint}', [AdminComplaintController::class, 'show'])->name('admin.complaints.show');
+            Route::post('/{complaint}/status', [AdminComplaintController::class, 'updateStatus'])->name('admin.complaints.update-status');
+            Route::post('/{complaint}/note', [AdminComplaintController::class, 'addNote'])->name('admin.complaints.add-note');
+        });
+
+        // Other admin routes
         Route::get('/payroll', function () {
             return view('admin.payroll');
         })->name('admin.payroll');
@@ -128,14 +146,32 @@ Route::prefix('employee/attendance')->group(function () {
         })->name('admin.settings');
     });
 
-// Employee attendance routes (for regular employees)
-Route::prefix('employee/attendance')->middleware(['auth', 'verified'])->group(function () {
-    Route::get('/', [EmployeeAttendanceController::class, 'index'])->name('employee.attendance');
-    Route::post('/check', [EmployeeAttendanceController::class, 'check'])->name('employee.attendance.check');
-    Route::post('/regularization', [EmployeeAttendanceController::class, 'regularization'])->name('employee.attendance.regularization');
-});
+    // Employee attendance routes (for all authenticated employees)
+    Route::prefix('employee/attendance')->group(function () {
+        Route::get('/', [EmployeeAttendanceController::class, 'index'])->name('employees.attendance');
+        Route::post('/check', [EmployeeAttendanceController::class, 'check'])->name('attendance.check');
+        Route::post('/regularization', [EmployeeAttendanceController::class, 'regularization'])->name('employees.attendance.regularization');
+        Route::get('/all', [EmployeeAttendanceController::class, 'allRecords'])->name('employees.attendance.all');
+    });
 
-    // HR routes (same views as admin but different route names)
+    // Employee travel routes
+    Route::prefix('employee/travel')->group(function () {
+        Route::get('/', [EmployeeTravelController::class, 'index'])->name('employees.travel');
+        Route::get('/create', [EmployeeTravelController::class, 'create'])->name('employees.travel.create');
+        Route::post('/', [EmployeeTravelController::class, 'store'])->name('employees.travel.store');
+        Route::get('/{travel}', [EmployeeTravelController::class, 'show'])->name('employees.travel.show');
+        Route::delete('/{travel}', [EmployeeTravelController::class, 'destroy'])->name('employees.travel.destroy');
+    });
+
+    // Employee complaints routes
+    Route::prefix('employee/complaints')->group(function () {
+        Route::get('/', [EmployeeComplaintController::class, 'index'])->name('employees.complaints.index');
+        Route::get('/create', [EmployeeComplaintController::class, 'create'])->name('employees.complaints.create');
+        Route::post('/', [EmployeeComplaintController::class, 'store'])->name('employees.complaints.store');
+        Route::get('/{complaint}', [EmployeeComplaintController::class, 'show'])->name('employees.complaints.show');
+    });
+
+    // HR routes
     Route::prefix('hr')->middleware('role:HR Manager')->group(function () {
         Route::get('/dashboard', function () {
             return view('admin.dashboard');
@@ -149,9 +185,20 @@ Route::prefix('employee/attendance')->middleware(['auth', 'verified'])->group(fu
             return view('admin.leaves');
         })->name('hr.leaves');
         
-        Route::get('/travel', function () {
-            return view('admin.travel');
-        })->name('hr.travel');
+        // HR travel routes
+        Route::prefix('travel')->group(function () {
+            Route::get('/', [AdminTravelController::class, 'index'])->name('hr.travel');
+            Route::get('/{travel}', [AdminTravelController::class, 'show'])->name('hr.travel.show');
+            Route::post('/{travel}/approve/{step}', [AdminTravelController::class, 'approveStep'])->name('hr.travel.approve');
+        });
+
+        // HR complaints routes
+        Route::prefix('complaints')->group(function () {
+            Route::get('/', [AdminComplaintController::class, 'index'])->name('hr.complaints.index');
+            Route::get('/{complaint}', [AdminComplaintController::class, 'show'])->name('hr.complaints.show');
+            Route::post('/{complaint}/status', [AdminComplaintController::class, 'updateStatus'])->name('hr.complaints.update-status');
+            Route::post('/{complaint}/note', [AdminComplaintController::class, 'addNote'])->name('hr.complaints.add-note');
+        });
         
         Route::get('/reports', function () {
             return view('admin.reports');
@@ -176,17 +223,30 @@ Route::prefix('employee/attendance')->middleware(['auth', 'verified'])->group(fu
             Route::put('/{employee}', [EmployeeController::class, 'update'])->name('dept.employees.update')->middleware('permission:employee-edit');
         });
 
+        // Department Head leave management
+        Route::prefix('leaves')->group(function () {
+            Route::get('/', [AdminLeaveController::class, 'index'])->name('dept.leaves');
+            Route::get('/{leave}', [AdminLeaveController::class, 'show'])->name('dept.leaves.show');
+            Route::post('/{leave}/approve', [AdminLeaveController::class, 'approve'])->name('dept.leaves.approve');
+            Route::post('/{leave}/reject', [AdminLeaveController::class, 'reject'])->name('dept.leaves.reject');
+        });
+
+        // Department Head travel management
+        Route::prefix('travel')->group(function () {
+            Route::get('/', [AdminTravelController::class, 'index'])->name('dept.travel');
+            Route::get('/{travel}', [AdminTravelController::class, 'show'])->name('dept.travel.show');
+            Route::post('/{travel}/approve/{step}', [AdminTravelController::class, 'approveStep'])->name('dept.travel.approve');
+        });
+
+        // Department Head complaints access (view only)
+        Route::prefix('complaints')->group(function () {
+            Route::get('/', [AdminComplaintController::class, 'index'])->name('dept.complaints.index');
+            Route::get('/{complaint}', [AdminComplaintController::class, 'show'])->name('dept.complaints.show');
+        });
+
         Route::get('/attendance', function () {
             return view('admin.attendance');
         })->name('dept.attendance');
-        
-        Route::get('/leaves', function () {
-            return view('admin.leaves');
-        })->name('dept.leaves');
-        
-        Route::get('/travel', function () {
-            return view('admin.travel');
-        })->name('dept.travel');
         
         Route::get('/reports', function () {
             return view('admin.reports');
@@ -211,9 +271,12 @@ Route::prefix('employee/attendance')->middleware(['auth', 'verified'])->group(fu
             return view('admin.leaves');
         })->name('finance.leaves');
         
-        Route::get('/travel', function () {
-            return view('admin.travel');
-        })->name('finance.travel');
+        // Finance travel routes
+        Route::prefix('travel')->group(function () {
+            Route::get('/', [AdminTravelController::class, 'index'])->name('finance.travel');
+            Route::get('/{travel}', [AdminTravelController::class, 'show'])->name('finance.travel.show');
+            Route::post('/{travel}/approve/{step}', [AdminTravelController::class, 'approveStep'])->name('finance.travel.approve');
+        });
         
         Route::get('/reports', function () {
             return view('admin.reports');
@@ -224,61 +287,40 @@ Route::prefix('employee/attendance')->middleware(['auth', 'verified'])->group(fu
         })->name('finance.settings');
     });
     
-    // Employee routes
+    // Employee routes (for regular employees)
     Route::prefix('employees')->group(function () {
         Route::get('/dashboard', [EmployeeDashboardController::class, 'employeeDashboard'])->name('employees.dashboard');
         
-        Route::get('/employees/payroll', [PayrollController::class, 'index'])->name('employees.payroll');
-        Route::get('/employees/tasks', [TasksController::class, 'index'])->name('employees.tasks');
-        Route::post('/attendance/check', [EmployeeAttendanceController::class, 'check'])->name('attendance.check');
+        // Employee tasks
+        Route::get('/tasks', [TasksController::class, 'index'])->name('employees.tasks');
+        Route::put('/tasks/{task}', [TasksController::class, 'update'])->name('employees.tasks.update');
 
-        Route::get('/tasks', [TasksController::class, 'index'])->name('employee.tasks');
-        Route::put('/tasks/{task}', [TasksController::class, 'update'])->name('employee.tasks.update');
-
+        // Employee events
         Route::get('/events', [EventController::class, 'index'])->name('employee.events');
         Route::get('/events/{event}', [EventController::class, 'show'])->name('employee.events.show');
         Route::post('/events/{event}/status', [EventController::class, 'updateStatus'])->name('employee.events.status');
         
-        // Attendance
-        Route::get('/attendance', function () {
-            return view('employees.attendance');
-        })->name('employees.attendance');
+        // Employee payroll
+        Route::get('/payroll', [PayrollController::class, 'index'])->name('employees.payroll');
 
-
-        Route::get('/', [EmployeeAttendanceController::class, 'index'])->name('employee.attendance');
-        Route::post('/check', [EmployeeAttendanceController::class, 'check'])->name('employee.attendance.check');
-        Route::post('/regularization', [EmployeeAttendanceController::class, 'regularization'])->name('employee.attendance.regularization');
-
-    
-        Route::get('/', [EmployeeAttendanceController::class, 'index'])->name('employee.attendance');
-        Route::post('/check', [EmployeeAttendanceController::class, 'check'])->name('employee.attendance.check');
-        Route::post('/regularization', [EmployeeAttendanceController::class, 'regularization'])->name('employee.attendance.regularization');
-        Route::get('/all', [EmployeeAttendanceController::class, 'allRecords'])->name('employee.attendance.all');
-
-        
-        // Employee leave routes (UPDATED)
+        // Employee leaves
         Route::prefix('leaves')->group(function () {
             Route::get('/', [EmployeeLeaveController::class, 'index'])->name('employees.leaves');
             Route::get('/create', [EmployeeLeaveController::class, 'create'])->name('employees.leaves.create');
             Route::post('/', [EmployeeLeaveController::class, 'store'])->name('employees.leaves.store');
             Route::get('/{leave}', [EmployeeLeaveController::class, 'show'])->name('employees.leaves.show');
-            Route::post('/{leave}/cancel', [EmployeeLeaveController::class, 'cancel'])->name('employees.leaves.cancel');
-            
-            // Add these new routes for leave history and details
-            Route::get('/{id}/details', [EmployeeLeaveController::class, 'showDetails'])->name('employees.leaves.details');
-            Route::post('/{id}/cancel-application', [EmployeeLeaveController::class, 'cancelApplication'])->name('employees.leaves.cancel-application');
+            Route::delete('/{leave}', [EmployeeLeaveController::class, 'destroy'])->name('employees.leaves.destroy');
         });
 
+        // Employee complaints
+        Route::prefix('complaints')->group(function () {
+            Route::get('/', [EmployeeComplaintController::class, 'index'])->name('employees.complaints.index');
+            Route::get('/create', [EmployeeComplaintController::class, 'create'])->name('employees.complaints.create');
+            Route::post('/', [EmployeeComplaintController::class, 'store'])->name('employees.complaints.store');
+            Route::get('/{complaint}', [EmployeeComplaintController::class, 'show'])->name('employees.complaints.show');
+        });
 
-        // Travel
-        Route::get('/travel', function () {
-            return view('employees.travel');
-        })->name('employees.travel');
-
-        Route::get('/payroll', function () {
-            return view('employees.payroll');
-        })->name('employees.payroll');
-
+        // Other employee routes
         Route::get('/pds', function () {
             return view('employees.pds');
         })->name('employees.pds');
@@ -287,16 +329,12 @@ Route::prefix('employee/attendance')->middleware(['auth', 'verified'])->group(fu
             return view('employees.saln');
         })->name('employees.saln');
 
-        // Reports
         Route::get('/reports', function () {
             return view('employees.reports');
         })->name('employees.reports');
 
-        // Settings
         Route::get('/settings', function () {
             return view('employees.settings');
         })->name('employees.settings');
-
-        
     });
 });

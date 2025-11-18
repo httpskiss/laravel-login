@@ -1,0 +1,1089 @@
+@extends('layouts.employee')
+
+@section('title', 'My Leave Requests')
+
+@section('content')
+
+<main class="p-4 md:p-6">
+    <div class="container mx-auto px-4">
+        <!-- Date Stamp Only -->
+        <div class="mb-6 animate-fade-in">
+            <div class="flex justify-end">
+                <div class="bg-green-50 px-3 py-2 rounded-lg">
+                    <span class="text-sm text-green-600 font-medium">Today: {{ now()->format('M j, Y') }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leave Application Card -->
+        <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden animate-fade-in">
+            <div class="bg-white border-b-4 border-blue-600 rounded-t-xl p-6 text-center shadow-md">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-blue-900 mb-2">Application for Leave</h1>
+                <p class="text-gray-600 text-sm">Civil Service Form No. 6, Revised 2020</p>
+                <p class="text-gray-500 text-xs mt-1">{{ Auth::user()->office_name ?? 'Biliran Province State University' }}</p>
+            </div>
+
+            <!-- Enhanced Progress Indicator -->
+            <div class="p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+                <div class="flex justify-between relative mb-2">
+                    <div class="absolute top-4 left-0 right-0 h-2 bg-gray-200 rounded-full z-0"></div>
+                    <div class="absolute top-4 left-0 h-2 bg-blue-500 rounded-full z-0 progress-bar" style="width: 25%"></div>
+                    
+                    <div class="flex flex-col items-center z-10">
+                        <div class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center mb-2 shadow-lg transition-all duration-300 step-indicator" data-step="1">
+                            <i class="fas fa-user text-sm"></i>
+                        </div>
+                        <span class="text-xs font-medium text-blue-600">Personal Info</span>
+                    </div>
+                    <div class="flex flex-col items-center z-10">
+                        <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center mb-2 shadow step-indicator" data-step="2">
+                            <i class="fas fa-clipboard-list text-sm"></i>
+                        </div>
+                        <span class="text-xs font-medium text-gray-500">Leave Details</span>
+                    </div>
+                    <div class="flex flex-col items-center z-10">
+                        <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center mb-2 shadow step-indicator" data-step="3">
+                            <i class="fas fa-file-alt text-sm"></i>
+                        </div>
+                        <span class="text-xs font-medium text-gray-500">Additional Info</span>
+                    </div>
+                    <div class="flex flex-col items-center z-10">
+                        <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center mb-2 shadow step-indicator" data-step="4">
+                            <i class="fas fa-check-circle text-sm"></i>
+                        </div>
+                        <span class="text-xs font-medium text-gray-500">Review</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Leave Balances -->
+            <div class="p-6 border-b">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center">
+                        <div class="p-2 rounded-full bg-blue-100 text-blue-600 mr-3">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-800">Your Leave Balances</h3>
+                    </div>
+                    <span class="text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full font-medium">
+                        <i class="fas fa-check-circle mr-1"></i> Good Standing
+                    </span>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-4 text-center hover:shadow-md transition-all duration-300">
+                        <div class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-umbrella-beach text-white text-lg"></i>
+                        </div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Vacation</p>
+                        <p class="text-2xl font-bold text-gray-800">15 <span class="text-sm font-normal text-gray-500">days</span></p>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-4 text-center hover:shadow-md transition-all duration-300">
+                        <div class="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-heart text-white text-lg"></i>
+                        </div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Sick Leave</p>
+                        <p class="text-2xl font-bold text-gray-800">10 <span class="text-sm font-normal text-gray-500">days</span></p>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-xl p-4 text-center hover:shadow-md transition-all duration-300">
+                        <div class="w-12 h-12 rounded-full bg-yellow-500 flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-baby text-white text-lg"></i>
+                        </div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Maternity</p>
+                        <p class="text-2xl font-bold text-gray-800">105 <span class="text-sm font-normal text-gray-500">days</span></p>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-xl p-4 text-center hover:shadow-md transition-all duration-300">
+                        <div class="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-user-friends text-white text-lg"></i>
+                        </div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Paternity</p>
+                        <p class="text-2xl font-bold text-gray-800">7 <span class="text-sm font-normal text-gray-500">days</span></p>
+                    </div>
+                </div>
+                
+                <!-- Balance Summary -->
+                <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Available</p>
+                            <p class="text-lg font-bold text-gray-800 mt-1">137 days</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">This Application</p>
+                            <p class="text-lg font-bold text-blue-500 mt-1 application-days">0 days</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Remaining</p>
+                            <p class="text-lg font-bold text-green-500 mt-1">137 days</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Multi-step Form -->
+            <form id="leaveForm" class="divide-y divide-gray-200">
+                <!-- Step 1: Personal Information -->
+                <div class="form-section p-6" id="step-1">
+                    <div class="flex items-center mb-6">
+                        <div class="p-2 rounded-full bg-blue-100 text-blue-600 mr-3">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Personal Information</h3>
+                            <p class="text-sm text-gray-600">Verify your personal details</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">1</span>
+                                Office/Department
+                            </label>
+                            <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                                   value="Human Resources Department" readonly>
+                        </div>
+                        
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">2</span>
+                                Employee Name
+                            </label>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="relative">
+                                    <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                                           placeholder=" " value="Doe" required>
+                                    <label class="floating-label absolute left-4 top-3 text-gray-500 pointer-events-none">Last Name</label>
+                                </div>
+                                <div class="relative">
+                                    <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                                           placeholder=" " value="John" required>
+                                    <label class="floating-label absolute left-4 top-3 text-gray-500 pointer-events-none">First Name</label>
+                                </div>
+                                <div class="relative">
+                                    <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                                           placeholder=" " value="M.">
+                                    <label class="floating-label absolute left-4 top-3 text-gray-500 pointer-events-none">Middle Name</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="relative">
+                            <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">3</span>
+                                Date of Filing
+                            </label>
+                            <input type="date" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                                   value="{{ now()->format('Y-m-d') }}" required>
+                        </div>
+                        
+                        <div class="relative">
+                            <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">4</span>
+                                Position
+                            </label>
+                            <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                                   value="HR Manager" required>
+                        </div>
+                        
+                        <div class="relative">
+                            <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">5</span>
+                                Salary
+                            </label>
+                            <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                                   value="₱ 45,000.00" required>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end mt-8">
+                        <button type="button" class="px-6 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-all duration-300 flex items-center next-step" data-next="2">
+                            Continue to Leave Details
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Leave Details -->
+                <div class="form-section hidden p-6" id="step-2">
+                    <div class="flex items-center mb-6">
+                        <div class="p-2 rounded-full bg-green-100 text-green-600 mr-3">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Leave Application Details</h3>
+                            <p class="text-sm text-gray-600">Select leave type and provide details</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Leave Type Selection -->
+                    <div class="mb-8">
+                        <label class="block text-sm font-medium text-gray-700 mb-4 flex items-center">
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded mr-2">6.A</span>
+                            Type of Leave to be Availed
+                        </label>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Vacation Leave -->
+                            <div class="leave-option p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all duration-300" data-type="vacation">
+                                <input type="radio" name="leave-type" id="vacation" class="hidden" value="vacation">
+                                <label for="vacation" class="cursor-pointer flex items-start">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 mr-3 mt-1 flex items-center justify-center radio-indicator">
+                                        <div class="w-3 h-3 rounded-full bg-blue-500 hidden"></div>
+                                    </div>
+                                    <div>
+                                        <strong class="text-gray-800 block">Vacation Leave</strong>
+                                        <p class="text-xs text-gray-500 mt-2">Sec. 51, Rule XVI, Omnibus Rules</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Mandatory/Forced Leave -->
+                            <div class="leave-option p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all duration-300" data-type="mandatory">
+                                <input type="radio" name="leave-type" id="mandatory" class="hidden" value="mandatory">
+                                <label for="mandatory" class="cursor-pointer flex items-start">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 mr-3 mt-1 flex items-center justify-center radio-indicator">
+                                        <div class="w-3 h-3 rounded-full bg-blue-500 hidden"></div>
+                                    </div>
+                                    <div>
+                                        <strong class="text-gray-800 block">Mandatory/Forced Leave</strong>
+                                        <p class="text-xs text-gray-500 mt-2">Sec. 25, Rule XVI, Omnibus Rules</p>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <!-- Sick Leave -->
+                            <div class="leave-option p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-green-300 hover:bg-green-50 transition-all duration-300" data-type="sick">
+                                <input type="radio" name="leave-type" id="sick" class="hidden" value="sick">
+                                <label for="sick" class="cursor-pointer flex items-start">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 mr-3 mt-1 flex items-center justify-center radio-indicator">
+                                        <div class="w-3 h-3 rounded-full bg-green-500 hidden"></div>
+                                    </div>
+                                    <div>
+                                        <strong class="text-gray-800 block">Sick Leave</strong>
+                                        <p class="text-xs text-gray-500 mt-2">Sec. 43, Rule XVI, Omnibus Rules</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Maternity Leave -->
+                            <div class="leave-option p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pink-300 hover:bg-pink-50 transition-all duration-300" data-type="maternity">
+                                <input type="radio" name="leave-type" id="maternity" class="hidden" value="maternity">
+                                <label for="maternity" class="cursor-pointer flex items-start">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 mr-3 mt-1 flex items-center justify-center radio-indicator">
+                                        <div class="w-3 h-3 rounded-full bg-pink-500 hidden"></div>
+                                    </div>
+                                    <div>
+                                        <strong class="text-gray-800 block">Maternity Leave</strong>
+                                        <p class="text-xs text-gray-500 mt-2">R.A. No. 11210 / CSC, DOLE, SSS IRR</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Paternity Leave -->
+                            <div class="leave-option p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-purple-300 hover:bg-purple-50 transition-all duration-300" data-type="paternity">
+                                <input type="radio" name="leave-type" id="paternity" class="hidden" value="paternity">
+                                <label for="paternity" class="cursor-pointer flex items-start">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 mr-3 mt-1 flex items-center justify-center radio-indicator">
+                                        <div class="w-3 h-3 rounded-full bg-purple-500 hidden"></div>
+                                    </div>
+                                    <div>
+                                        <strong class="text-gray-800 block">Paternity Leave</strong>
+                                        <p class="text-xs text-gray-500 mt-2">R.A. No. 8187 / CSC MC No. 71, s. 1998</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Special Privilege Leave -->
+                            <div class="leave-option p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-yellow-300 hover:bg-yellow-50 transition-all duration-300" data-type="special_privilege">
+                                <input type="radio" name="leave-type" id="special_privilege" class="hidden" value="special_privilege">
+                                <label for="special_privilege" class="cursor-pointer flex items-start">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 mr-3 mt-1 flex items-center justify-center radio-indicator">
+                                        <div class="w-3 h-3 rounded-full bg-yellow-500 hidden"></div>
+                                    </div>
+                                    <div>
+                                        <strong class="text-gray-800 block">Special Privilege Leave</strong>
+                                        <p class="text-xs text-gray-500 mt-2">Sec. 21, Rule XVI, Omnibus Rules</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Solo Parent Leave -->
+                            <div class="leave-option p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-orange-300 hover:bg-orange-50 transition-all duration-300" data-type="solo_parent">
+                                <input type="radio" name="leave-type" id="solo_parent" class="hidden" value="solo_parent">
+                                <label for="solo_parent" class="cursor-pointer flex items-start">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 mr-3 mt-1 flex items-center justify-center radio-indicator">
+                                        <div class="w-3 h-3 rounded-full bg-orange-500 hidden"></div>
+                                    </div>
+                                    <div>
+                                        <strong class="text-gray-800 block">Solo Parent Leave</strong>
+                                        <p class="text-xs text-gray-500 mt-2">RA No. 8972 / CSC MC No. 8, s. 2004</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Study Leave -->
+                            <div class="leave-option p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition-all duration-300" data-type="study">
+                                <input type="radio" name="leave-type" id="study" class="hidden" value="study">
+                                <label for="study" class="cursor-pointer flex items-start">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 mr-3 mt-1 flex items-center justify-center radio-indicator">
+                                        <div class="w-3 h-3 rounded-full bg-indigo-500 hidden"></div>
+                                    </div>
+                                    <div>
+                                        <strong class="text-gray-800 block">Study Leave</strong>
+                                        <p class="text-xs text-gray-500 mt-2">Sec. 68, Rule XVI, Omnibus Rules</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- VAWC Leave -->
+                            <div class="leave-option p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-red-300 hover:bg-red-50 transition-all duration-300" data-type="vawc">
+                                <input type="radio" name="leave-type" id="vawc" class="hidden" value="vawc">
+                                <label for="vawc" class="cursor-pointer flex items-start">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 mr-3 mt-1 flex items-center justify-center radio-indicator">
+                                        <div class="w-3 h-3 rounded-full bg-red-500 hidden"></div>
+                                    </div>
+                                    <div>
+                                        <strong class="text-gray-800 block">10-Day VAWC Leave</strong>
+                                        <p class="text-xs text-gray-500 mt-2">RA No. 9262 / CSC MC No. 15, s. 2005</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Rehabilitation Privilege Leave -->
+                            <div class="leave-option p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-red-300 hover:bg-red-50 transition-all duration-300" data-type="rehabilitation">
+                                <input type="radio" name="leave-type" id="rehabilitation" class="hidden" value="rehabilitation">
+                                <label for="rehabilitation" class="cursor-pointer flex items-start">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 mr-3 mt-1 flex items-center justify-center radio-indicator">
+                                        <div class="w-3 h-3 rounded-full bg-red-500 hidden"></div>
+                                    </div>
+                                    <div>
+                                        <strong class="text-gray-800 block">Rehabilitation Privilege Leave</strong>
+                                        <p class="text-xs text-gray-500 mt-2">Sec. 55, Rule XVI, Omnibus Rules</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Special Leave Benefits for Women -->
+                            <div class="leave-option p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-red-300 hover:bg-red-50 transition-all duration-300" data-type="special_leave_women">
+                                <input type="radio" name="leave-type" id="special_leave_women" class="hidden" value="special_leave_women">
+                                <label for="special_leave_women" class="cursor-pointer flex items-start">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 mr-3 mt-1 flex items-center justify-center radio-indicator">
+                                        <div class="w-3 h-3 rounded-full bg-red-500 hidden"></div>
+                                    </div>
+                                    <div>
+                                        <strong class="text-gray-800 block">Special Leave Benefits for Women</strong>
+                                        <p class="text-xs text-gray-500 mt-2">RA No. 9710 / CSC MC No. 25, s. 2010</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                             <!-- Special Emergency (Calamity) Leave -->
+                            <div class="leave-option p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-red-300 hover:bg-red-50 transition-all duration-300" data-type="calamity">
+                                <input type="radio" name="leave-type" id="calamity" class="hidden" value="calamity">
+                                <label for="calamity" class="cursor-pointer flex items-start">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 mr-3 mt-1 flex items-center justify-center radio-indicator">
+                                        <div class="w-3 h-3 rounded-full bg-red-500 hidden"></div>
+                                    </div>
+                                    <div>
+                                        <strong class="text-gray-800 block">Special Emergency (Calamity) Leave</strong>
+                                        <p class="text-xs text-gray-500 mt-2">CSC MC No. 2 s. 2012, as amended</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                             <!-- Adoption Leave -->
+                            <div class="leave-option p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-red-300 hover:bg-red-50 transition-all duration-300" data-type="adoption">
+                                <input type="radio" name="leave-type" id="adoption" class="hidden" value="adoption">
+                                <label for="adoption" class="cursor-pointer flex items-start">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 mr-3 mt-1 flex items-center justify-center radio-indicator">
+                                        <div class="w-3 h-3 rounded-full bg-red-500 hidden"></div>
+                                    </div>
+                                    <div>
+                                        <strong class="text-gray-800 block">Adoption Leave</strong>
+                                        <p class="text-xs text-gray-500 mt-2">R.A. No. 8552</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Leave Details (Dynamic based on selection) -->
+                    <div class="mb-8 bg-blue-50 border border-blue-200 rounded-xl p-5 transition-all duration-300 leave-details-placeholder">
+                        <div class="text-center py-4">
+                            <i class="fas fa-mouse-pointer text-blue-400 text-2xl mb-3"></i>
+                            <p class="text-blue-700 font-medium">Select a leave type to continue</p>
+                            <p class="text-blue-600 text-sm mt-1">Specific requirements and details will appear here</p>
+                        </div>
+                    </div>
+
+                    <!-- Conditional Sections for Specific Leave Types -->
+                    <div class="conditional-section vacation-details" id="vacation-details">
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Vacation Location
+                            </label>
+                            <div class="space-y-3">
+                                <div class="flex items-center">
+                                    <input type="radio" name="vacation-location" id="within-philippines" class="mr-2" value="within_philippines" checked>
+                                    <label for="within-philippines" class="text-sm">Within the Philippines</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="radio" name="vacation-location" id="abroad" class="mr-2" value="abroad">
+                                    <label for="abroad" class="text-sm">Abroad (Specify)</label>
+                                    <input type="text" class="ml-2 px-3 py-2 border border-gray-300 rounded-lg flex-1" placeholder="Specify country" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="conditional-section sick-details" id="sick-details">
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Sick Leave Details
+                            </label>
+                            <div class="space-y-3">
+                                <div class="flex items-center">
+                                    <input type="radio" name="sick-type" id="in-hospital" class="mr-2" value="in_hospital">
+                                    <label for="in-hospital" class="text-sm">In Hospital (Specify Illness)</label>
+                                    <input type="text" class="ml-2 px-3 py-2 border border-gray-300 rounded-lg flex-1" placeholder="Specify illness">
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="radio" name="sick-type" id="out-patient" class="mr-2" value="out_patient">
+                                    <label for="out-patient" class="text-sm">Out Patient (Specify Illness)</label>
+                                    <input type="text" class="ml-2 px-3 py-2 border border-gray-300 rounded-lg flex-1" placeholder="Specify illness">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="conditional-section study-details" id="study-details">
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Study Leave Purpose
+                            </label>
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <input type="radio" name="study-purpose" id="masters-degree" class="mr-2" value="masters_degree">
+                                    <label for="masters-degree" class="text-sm">Completion of Master's Degree</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="radio" name="study-purpose" id="bar-review" class="mr-2" value="bar_review">
+                                    <label for="bar-review" class="text-sm">BAR/Board Examination Review</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="radio" name="study-purpose" id="other-purpose" class="mr-2" value="other_purpose">
+                                    <label for="other-purpose" class="text-sm">Other purpose:</label>
+                                    <input type="text" class="ml-2 px-3 py-2 border border-gray-300 rounded-lg flex-1" placeholder="Specify purpose">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Working Days & Dates -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                6.C Number of Working Days Applied For
+                            </label>
+                            <div class="relative">
+                                <input type="number" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all days-input" 
+                                       min="0.5" step="0.5" placeholder="0.5 = half day" value="">
+                                <span class="absolute right-4 top-3 text-gray-500 text-sm">days</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">Enter 0.5 for half-day leave</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Inclusive Dates
+                            </label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="relative">
+                                    <input type="date" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all start-date">
+                                    <label class="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500">Start</label>
+                                </div>
+                                <div class="relative">
+                                    <input type="date" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all end-date">
+                                    <label class="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500">End</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Commutation -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            6.D Commutation
+                        </label>
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <input type="radio" name="commutation" id="commutation-no" class="mr-2" value="not_requested" checked>
+                                <label for="commutation-no" class="text-sm">Not Requested</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="radio" name="commutation" id="commutation-yes" class="mr-2" value="requested">
+                                <label for="commutation-yes" class="text-sm">Requested</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Reason -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Reason for Leave
+                        </label>
+                        <textarea class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
+                                  rows="4" placeholder="Please provide detailed reason for your leave application..." maxlength="500"></textarea>
+                        <div class="flex justify-between mt-2">
+                            <span class="text-xs text-gray-500">Minimum 20 characters required</span>
+                            <span class="text-xs text-gray-500"><span class="char-count">0</span>/500 characters</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between mt-8">
+                        <button type="button" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-all duration-300 flex items-center prev-step" data-prev="1">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Back to Personal Info
+                        </button>
+                        <button type="button" class="px-6 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-all duration-300 flex items-center next-step" data-next="3">
+                            Continue to Additional Info
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Additional Information -->
+                <div class="form-section hidden p-6" id="step-3">
+                    <div class="flex items-center mb-6">
+                        <div class="p-2 rounded-full bg-yellow-100 text-yellow-600 mr-3">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Additional Information</h3>
+                            <p class="text-sm text-gray-600">Provide supporting documents and details</p>
+                        </div>
+                    </div>
+
+                    <!-- Supporting Documents -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-4">
+                            Required Supporting Documents
+                        </label>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                <div class="flex items-center">
+                                    <i class="fas fa-file-medical text-green-500 mr-3"></i>
+                                    <div>
+                                        <p class="font-medium text-gray-800">Medical Certificate</p>
+                                        <p class="text-sm text-gray-500">Required for sick leave exceeding 3 days</p>
+                                    </div>
+                                </div>
+                                <button type="button" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-all">
+                                    <i class="fas fa-upload mr-1"></i> Upload
+                                </button>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                <div class="flex items-center">
+                                    <i class="fas fa-plane text-blue-500 mr-3"></i>
+                                    <div>
+                                        <p class="font-medium text-gray-800">TravelAuthorityItinerary</p>
+                                        <p class="text-sm text-gray-500">Required for vacation leave abroad</p>
+                                    </div>
+                                </div>
+                                <button type="button" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-all">
+                                    <i class="fas fa-upload mr-1"></i> Upload
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emergency Contact -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-4">
+                            Emergency Contact Information
+                        </label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Contact Person</label>
+                                <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                       placeholder="Full name">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Contact Number</label>
+                                <input type="tel" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                       placeholder="Phone number">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Relationship</label>
+                                <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                       placeholder="Relationship to employee">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Work Handover -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-4">
+                            Work Handover Arrangements
+                        </label>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Person-in-Charge</label>
+                                <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">Select colleague</option>
+                                    <option value="1">Jane Smith - HR Assistant</option>
+                                    <option value="2">Mike Johnson - HR Specialist</option>
+                                    <option value="3">Sarah Davis - HR Manager</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Handover Notes</label>
+                                <textarea class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                          rows="3" placeholder="Brief notes on pending tasks and responsibilities..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Signature -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Signature of Applicant
+                        </label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                            <i class="fas fa-signature text-gray-400 text-2xl mb-3"></i>
+                            <p class="text-gray-600 font-medium">Digital Signature</p>
+                            <p class="text-sm text-gray-500 mt-1">Your digital signature will be automatically applied upon submission</p>
+                            <div class="mt-4 p-3 bg-white border rounded-lg">
+                                <p class="text-sm font-medium text-gray-800">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</p>
+                                <p class="text-xs text-gray-500">{{ auth()->user()->position }}</p>
+                                <p class="text-xs text-gray-500">{{ now()->format('F j, Y') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between mt-8">
+                        <button type="button" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-all duration-300 flex items-center prev-step" data-prev="2">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Back to Leave Details
+                        </button>
+                        <button type="button" class="px-6 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-all duration-300 flex items-center next-step" data-next="4">
+                            Review Application
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Review & Submit -->
+                <div class="form-section hidden p-6" id="step-4">
+                    <div class="flex items-center mb-6">
+                        <div class="p-2 rounded-full bg-purple-100 text-purple-600 mr-3">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Review Your Application</h3>
+                            <p class="text-sm text-gray-600">Verify all details before submission</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-6 mb-6">
+                        <h4 class="font-semibold text-gray-800 mb-4">Application Summary</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="review-item">
+                                <span class="text-sm text-gray-500">Leave Type:</span>
+                                <span class="font-medium review-leave-type">-</span>
+                            </div>
+                            <div class="review-item">
+                                <span class="text-sm text-gray-500">Duration:</span>
+                                <span class="font-medium review-duration">-</span>
+                            </div>
+                            <div class="review-item">
+                                <span class="text-sm text-gray-500">Start Date:</span>
+                                <span class="font-medium review-start-date">-</span>
+                            </div>
+                            <div class="review-item">
+                                <span class="text-sm text-gray-500">End Date:</span>
+                                <span class="font-medium review-end-date">-</span>
+                            </div>
+                            <div class="review-item">
+                                <span class="text-sm text-gray-500">Commutation:</span>
+                                <span class="font-medium review-commutation">Not Requested</span>
+                            </div>
+                            <div class="review-item md:col-span-2">
+                                <span class="text-sm text-gray-500">Reason:</span>
+                                <p class="font-medium review-reason mt-1">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Leave Credits Summary -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
+                        <h4 class="font-semibold text-blue-800 mb-4">Leave Credits Summary</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                            <div>
+                                <p class="text-xs font-medium text-blue-600 uppercase tracking-wide">Current Balance</p>
+                                <p class="text-2xl font-bold text-blue-800 mt-1">15 days</p>
+                                <p class="text-xs text-blue-600">Vacation Leave</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium text-blue-600 uppercase tracking-wide">This Application</p>
+                                <p class="text-2xl font-bold text-blue-800 mt-1 application-days">0 days</p>
+                                <p class="text-xs text-blue-600">To be deducted</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium text-blue-600 uppercase tracking-wide">Remaining Balance</p>
+                                <p class="text-2xl font-bold text-green-600 mt-1">15 days</p>
+                                <p class="text-xs text-green-600">After approval</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+                        <div class="flex items-start">
+                            <i class="fas fa-exclamation-triangle text-yellow-500 mt-1 mr-3"></i>
+                            <div>
+                                <h5 class="font-medium text-yellow-800">Important Reminders</h5>
+                                <ul class="text-sm text-yellow-700 mt-2 space-y-1">
+                                    <li>• Applications require supervisor approval</li>
+                                    <li>• Submit at least 3 working days in advance for vacation leave</li>
+                                    <li>• Sick leave requires medical certificate if more than 3 days</li>
+                                    <li>• You will receive email notification once processed</li>
+                                    <li>• Approval may take 2-3 working days</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between mt-8">
+                        <button type="button" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-all duration-300 flex items-center prev-step" data-prev="3">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Back to Additional Info
+                        </button>
+                        <button type="submit" class="px-6 py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-all duration-300 flex items-center">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Submit Application
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Multi-step form functionality
+    let currentStep = 1;
+    const totalSteps = 4;
+    
+    // Initialize progress bar
+    function updateProgressBar() {
+        const progress = (currentStep - 1) / (totalSteps - 1) * 100;
+        document.querySelector('.progress-bar').style.width = `${progress}%`;
+        
+        // Update step indicators
+        document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+            const stepNum = parseInt(indicator.dataset.step);
+            if (stepNum < currentStep) {
+                indicator.classList.remove('bg-gray-300', 'text-gray-500');
+                indicator.classList.add('bg-green-500', 'text-white');
+                indicator.innerHTML = '<i class="fas fa-check text-sm"></i>';
+            } else if (stepNum === currentStep) {
+                indicator.classList.remove('bg-gray-300', 'text-gray-500', 'bg-green-500', 'text-white');
+                indicator.classList.add('bg-blue-500', 'text-white');
+            } else {
+                indicator.classList.remove('bg-blue-500', 'bg-green-500', 'text-white');
+                indicator.classList.add('bg-gray-300', 'text-gray-500');
+                indicator.innerHTML = `<i class="fas fa-${indicator.querySelector('i').dataset.icon} text-sm"></i>`;
+            }
+        });
+    }
+    
+    // Navigation between steps
+    function navigateToStep(step) {
+        document.querySelectorAll('.form-section').forEach(section => {
+            section.classList.add('hidden');
+        });
+        document.getElementById(`step-${step}`).classList.remove('hidden');
+        currentStep = step;
+        updateProgressBar();
+    }
+    
+    // Leave type selection with conditional sections
+    document.querySelectorAll('.leave-option').forEach(option => {
+        option.addEventListener('click', function() {
+            document.querySelectorAll('.leave-option').forEach(opt => {
+                opt.classList.remove('selected');
+                opt.querySelector('.radio-indicator div').classList.add('hidden');
+            });
+            
+            this.classList.add('selected');
+            this.querySelector('.radio-indicator div').classList.remove('hidden');
+            this.querySelector('input[type="radio"]').checked = true;
+            
+            // Update leave details and show conditional sections
+            const leaveType = this.dataset.type;
+            updateLeaveDetails(leaveType);
+            showConditionalSections(leaveType);
+        });
+    });
+
+    // Show conditional sections based on leave type
+    function showConditionalSections(leaveType) {
+        // Hide all conditional sections first
+        document.querySelectorAll('.conditional-section').forEach(section => {
+            section.classList.remove('active');
+        });
+
+        // Show relevant conditional section
+        if (leaveType === 'vacation') {
+            document.getElementById('vacation-details').classList.add('active');
+        } else if (leaveType === 'sick') {
+            document.getElementById('sick-details').classList.add('active');
+        } else if (leaveType === 'study') {
+            document.getElementById('study-details').classList.add('active');
+        }
+    }
+
+    // Enable/disable abroad input based on radio selection
+    document.querySelectorAll('input[name="vacation-location"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const abroadInput = document.querySelector('input[placeholder="Specify country"]');
+            abroadInput.disabled = this.value !== 'abroad';
+            if (this.value !== 'abroad') {
+                abroadInput.value = '';
+            }
+        });
+    });
+    
+    // Character counter for reason textarea
+    const reasonTextarea = document.querySelector('textarea');
+    const charCount = document.querySelector('.char-count');
+    
+    reasonTextarea.addEventListener('input', function() {
+        const count = this.value.length;
+        charCount.textContent = count;
+        
+        if (count < 20) {
+            this.classList.add('border-red-300');
+            this.classList.remove('border-gray-300');
+        } else {
+            this.classList.remove('border-red-300');
+            this.classList.add('border-gray-300');
+        }
+    });
+    
+    // Days calculation based on dates
+    const startDateInput = document.querySelector('.start-date');
+    const endDateInput = document.querySelector('.end-date');
+    const daysInput = document.querySelector('.days-input');
+    
+    function calculateDays() {
+        if (startDateInput.value && endDateInput.value) {
+            const start = new Date(startDateInput.value);
+            const end = new Date(endDateInput.value);
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            daysInput.value = diffDays;
+            
+            // Update application days display
+            document.querySelectorAll('.application-days').forEach(el => {
+                el.textContent = `${diffDays} days`;
+            });
+        }
+    }
+    
+    startDateInput.addEventListener('change', calculateDays);
+    endDateInput.addEventListener('change', calculateDays);
+    
+    // Next/Previous step buttons
+    document.querySelectorAll('.next-step').forEach(button => {
+        button.addEventListener('click', function() {
+            const nextStep = parseInt(this.dataset.next);
+            if (validateStep(currentStep)) {
+                navigateToStep(nextStep);
+                if (nextStep === 4) {
+                    updateReviewSummary();
+                }
+            }
+        });
+    });
+    
+    document.querySelectorAll('.prev-step').forEach(button => {
+        button.addEventListener('click', function() {
+            const prevStep = parseInt(this.dataset.prev);
+            navigateToStep(prevStep);
+        });
+    });
+    
+    // Form validation per step
+    function validateStep(step) {
+        let isValid = true;
+        
+        if (step === 2) {
+            const selectedLeaveType = document.querySelector('input[name="leave-type"]:checked');
+            if (!selectedLeaveType) {
+                alert('Please select a leave type');
+                isValid = false;
+            }
+            
+            if (reasonTextarea.value.length < 20) {
+                alert('Please provide a detailed reason (minimum 20 characters)');
+                reasonTextarea.focus();
+                isValid = false;
+            }
+        }
+        
+        return isValid;
+    }
+    
+    // Update review summary
+    function updateReviewSummary() {
+        const leaveType = document.querySelector('input[name="leave-type"]:checked');
+        if (leaveType) {
+            const leaveTypeText = {
+                'vacation': 'Vacation Leave',
+                'mandatory': 'Mandatory/Forced Leave',
+                'sick': 'Sick Leave',
+                'maternity': 'Maternity Leave',
+                'paternity': 'Paternity Leave',
+                'special_privilege': 'Special Privilege Leave',
+                'solo_parent': 'Solo Parent Leave',
+                'study': 'Study Leave',
+                'vawc': '10-Day VAWC Leave',
+                'rehabilitation': 'Rehabilitation Privilege Leave',
+                'special_leave_women': 'Special Leave Benefits for Women',
+                'calamity': 'Special Emergency (Calamity) Leave',
+                'adoption': 'Adoption Leave'
+            };
+            document.querySelector('.review-leave-type').textContent = leaveTypeText[leaveType.value] || '-';
+        }
+        
+        document.querySelector('.review-duration').textContent = 
+            daysInput.value ? `${daysInput.value} days` : '-';
+        document.querySelector('.review-start-date').textContent = 
+            startDateInput.value ? new Date(startDateInput.value).toLocaleDateString() : '-';
+        document.querySelector('.review-end-date').textContent = 
+            endDateInput.value ? new Date(endDateInput.value).toLocaleDateString() : '-';
+        document.querySelector('.review-reason').textContent = 
+            reasonTextarea.value || '-';
+
+        // Update commutation
+        const commutation = document.querySelector('input[name="commutation"]:checked');
+        document.querySelector('.review-commutation').textContent = 
+            commutation ? (commutation.value === 'requested' ? 'Requested' : 'Not Requested') : 'Not Requested';
+    }
+    
+    // Update leave details based on type
+    function updateLeaveDetails(type) {
+        const placeholder = document.querySelector('.leave-details-placeholder');
+        const details = {
+            'vacation': {
+                title: 'Vacation Leave Requirements',
+                color: 'blue',
+                items: [
+                    'Minimum 3 working days advance notice required',
+                    'Maximum consecutive leave: 15 working days',
+                    'Blackout periods may apply during peak seasons',
+                    'Coordinate with your team before submission'
+                ]
+            },
+            'sick': {
+                title: 'Sick Leave Requirements',
+                color: 'green',
+                items: [
+                    'Medical certificate required for leaves exceeding 3 days',
+                    'Notification should be sent as soon as possible',
+                    'Follow-up documents may be requested by HR',
+                    'Contact your supervisor immediately for emergencies'
+                ]
+            },
+            'maternity': {
+                title: 'Maternity Leave Requirements',
+                color: 'pink',
+                items: [
+                    '105 days maternity leave as per R.A. No. 11210',
+                    'Submit certificate of pregnancy from physician',
+                    'Additional 15 days for solo mothers',
+                    '30 days for miscarriage or ectopic pregnancy'
+                ]
+            },
+            'paternity': {
+                title: 'Paternity Leave Requirements',
+                color: 'purple',
+                items: [
+                    '7 days paternity leave as per R.A. No. 8187',
+                    'Available for first four deliveries of legitimate spouse',
+                    'Submit marriage certificate and child\'s birth certificate',
+                    'Can be availed continuously or intermittently'
+                ]
+            },
+            'study': {
+                title: 'Study Leave Requirements',
+                color: 'indigo',
+                items: [
+                    'Maximum of 6 months study leave',
+                    'Submit study plan and admission documents',
+                    'Service obligation required after completion',
+                    'Approval subject to agency\'s training needs'
+                ]
+            }
+        };
+
+        const detail = details[type] || {
+            title: 'Leave Requirements',
+            color: 'blue',
+            items: ['Please ensure all required documents are submitted', 'Follow agency-specific guidelines for this leave type']
+        };
+
+        placeholder.innerHTML = `
+            <div class="flex items-start">
+                <i class="fas fa-info-circle text-${detail.color}-500 mt-1 mr-3"></i>
+                <div>
+                    <h5 class="font-medium text-${detail.color}-800 mb-2">${detail.title}</h5>
+                    <ul class="text-sm text-${detail.color}-700 space-y-1">
+                        ${detail.items.map(item => `<li>• ${item}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+
+        // Update background color
+        placeholder.classList.remove('bg-blue-50', 'border-blue-200', 'bg-green-50', 'border-green-200', 'bg-pink-50', 'border-pink-200', 'bg-purple-50', 'border-purple-200', 'bg-indigo-50', 'border-indigo-200');
+        placeholder.classList.add(`bg-${detail.color}-50`, `border-${detail.color}-200`);
+    }
+    
+    // Form submission
+    document.getElementById('leaveForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (validateStep(4)) {
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
+            submitBtn.disabled = true;
+            
+            // Simulate API call
+            setTimeout(() => {
+                alert('Leave application submitted successfully! You will receive a confirmation email shortly.');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                // Here you would typically redirect or show success message
+            }, 2000);
+        }
+    });
+    
+    // Initialize
+    updateProgressBar();
+});
+</script>
+@endpush
+@endsection

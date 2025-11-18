@@ -6,49 +6,6 @@
     <title>Attendance Calendar</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .calendar-day {
-            transition: all 0.2s ease;
-        }
-        .calendar-day:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        .present {
-            background-color: #2563eb;
-            color: white;
-        }
-        .absent {
-            background-color: #dc2626;
-            color: white;
-        }
-        .late {
-            background-color: #d97706;
-            color: white;
-        }
-        .leave {
-            background-color: #7c3aed;
-            color: white;
-        }
-        .holiday {
-            background-color: #059669;
-            color: white;
-        }
-        .weekend {
-            background-color: #f3f4f6;
-        }
-        .future {
-            background-color: #f9fafb;
-            color: #9ca3af;
-        }
-        .legend-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 4px;
-        }
-    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div class="container mx-auto px-4 py-8 max-w-6xl">

@@ -11,253 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @stack('styles')
-    <style>
-        /* Sidebar Styles */
-        .sidebar {
-            transition: all 0.3s ease;
-            width: 250px;
-            z-index: 40;
-        }
-        
-        .sidebar.collapsed {
-            width: 70px;
-        }
-        
-        .sidebar.collapsed .nav-text,
-        .sidebar.collapsed .logo-text {
-            display: none;
-        }
-        
-        .main-content {
-            transition: all 0.3s ease;
-            margin-left: 250px;
-            width: calc(100% - 250px);
-        }
-        
-        .sidebar.collapsed ~ .main-content {
-            margin-left: 70px;
-            width: calc(100% - 70px);
-        }
-        
-        /* Mobile Responsiveness */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                position: fixed;
-                z-index: 50;
-                height: 100vh;
-                width: 250px;
-            }
-            
-            .sidebar.mobile-open {
-                transform: translateX(0);
-            }
-            
-            .sidebar.collapsed {
-                transform: translateX(-100%);
-            }
-            
-            .main-content {
-                margin-left: 0;
-                width: 100%;
-            }
-            
-            .sidebar.collapsed ~ .main-content {
-                margin-left: 0;
-                width: 100%;
-            }
-            
-            .mobile-menu-btn {
-                display: block;
-            }
-        }
-        
-        /* Logo Styling */
-        .logo-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 1rem 0.5rem;
-            transition: all 0.3s ease;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 1rem;
-        }
-        
-        .sidebar-logo {
-            transition: all 0.3s ease;
-            max-width: 100%;
-            height: auto;
-        }
-        
-        .sidebar.collapsed .logo-container {
-            padding: 1rem 0.25rem;
-        }
-        
-        .sidebar.collapsed .sidebar-logo {
-            height: 40px;
-            width: auto;
-        }
-        
-        /* Navigation Items */
-        .nav-item {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            margin: 0.25rem 0.5rem;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-            overflow: hidden;
-        }
-        
-        .nav-item:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-        
-        .nav-item.active {
-            background-color: rgba(59, 130, 246, 0.5);
-        }
-        
-        .nav-icon {
-            min-width: 1.5rem;
-            text-align: center;
-            margin-right: 0.75rem;
-        }
-        
-        .sidebar.collapsed .nav-icon {
-            margin-right: 0;
-        }
-        
-        /* Collapse Button - Updated Styles */
-        .collapse-btn {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 0.75rem 1rem;
-            margin: 1rem 0.5rem;
-            border-radius: 0.75rem;
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-            min-height: 44px;
-            width: calc(100% - 1rem);
-            box-sizing: border-box;
-        }
-
-        .collapse-btn:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.3);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .collapse-btn:active {
-            transform: translateY(0);
-        }
-
-        .sidebar.collapsed .collapse-btn {
-            justify-content: center;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            width: calc(100% - 1rem);
-        }
-
-        .collapse-btn i {
-            transition: transform 0.3s ease;
-            font-size: 0.9rem;
-        }
-
-        .sidebar.collapsed .collapse-btn i {
-            transform: rotate(180deg);
-        }
-        
-        /* Overlay for mobile */
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 45;
-        }
-        
-        @media (max-width: 768px) {
-            .sidebar-overlay.mobile-open {
-                display: block;
-            }
-        }
-
-        /* Custom styles for attendance system */
-        .biometric-placeholder {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        }
-
-        .attendance-card {
-            transition: all 0.3s ease;
-        }
-
-        .attendance-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-
-        .status-present {
-            background-color: #d1fae5;
-            color: #065f46;
-        }
-
-        .status-absent {
-            background-color: #fee2e2;
-            color: #991b1b;
-        }
-
-        .status-late {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-
-        .status-leave {
-            background-color: #dbeafe;
-            color: #1e40af;
-        }
-
-        .qr-scanner {
-            position: relative;
-            width: 300px;
-            height: 300px;
-            margin: 0 auto;
-            border: 3px dashed #3b82f6;
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        .qr-scanner video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .qr-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.3);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 1.2rem;
-        }
-    </style>
 </head>
 <body class="bg-gray-100">
     <div class="flex h-screen">
@@ -295,17 +48,21 @@
                     <i class="fas fa-plane nav-icon"></i>
                     <span class="nav-text">Travel</span>
                 </a>
-                <a href="{{ route('employees.payroll') }}" class="nav-item">
-                    <i class="fas fa-money-bill-wave nav-icon"></i>
-                    <span class="nav-text">Payroll</span>
-                </a>
                 <a href="{{ route('employees.pds') }}" class="nav-item">
                     <i class="fas fa-id-card nav-icon"></i>
                     <span class="nav-text">PDS</span>
                 </a>
+                <a href="{{ route('employees.complaints.index') }}" class="nav-item">
+                    <i class="fas fa-exclamation-circle nav-icon"></i>
+                    <span class="nav-text">HR Complaints</span>
+                </a>
                 <a href="{{ route('employees.saln') }}" class="nav-item">
                     <i class="fas fa-file-contract nav-icon"></i>
                     <span class="nav-text">SALN</span>
+                </a>
+                <a href="{{ route('employees.payroll') }}" class="nav-item">
+                    <i class="fas fa-money-bill-wave nav-icon"></i>
+                    <span class="nav-text">Payroll</span>
                 </a>
                 <a href="{{ route('employees.reports') }}" class="nav-item">
                     <i class="fas fa-chart-line nav-icon"></i>
