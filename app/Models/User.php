@@ -38,6 +38,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'dob' => 'date',
         'hire_date' => 'date',
+         'settings' => 'array'
     ];
 
     protected $appends = ['profile_photo_url', 'role'];

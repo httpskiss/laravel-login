@@ -1,6 +1,7 @@
 /* Login & Authentication Styles */
 .light-gray-bg {
-    background-color: #f3f4f6;
+    background: linear-gradient(135deg, #fef5cc 0%, #d4e4ff 50%, #fef0b3 100%);
+    /* Vibrant blend of yellow and blue matching BiPSU colors */
 }
 
 .form-container {
@@ -83,11 +84,19 @@
 }
 
 .university-bg {
-    background-image: linear-gradient(rgba(30, 58, 138, 0.7), rgba(30, 58, 138, 0.8)),
-        url('assets/images/uni_photo.jpg');
+    background-image:
+        linear-gradient(
+            rgba(30, 58, 138, 0.55),   /* transparent blue overlay */
+            rgba(30, 58, 138, 0.55)
+        ),
+        url("/assets/images/uni_photo.jpg");  
+        
     background-size: cover;
     background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
 }
+
 
 .btn-primary {
     background-color: #1e3a8a;
@@ -150,4 +159,23 @@
 
 .social-btn:hover {
     background-color: #f9fafb;
+}
+
+.form-radio {
+    display: flex;
+    align-items: center;
+    margin-right: 1rem;
+}
+
+.form-radio input {
+    margin-right: 0.5rem;
+}
+
+.form-checkbox {
+    display: flex;
+    align-items: center;
+}
+
+.form-checkbox input {
+    margin-right: 0.5rem;
 }

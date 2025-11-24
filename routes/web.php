@@ -51,12 +51,23 @@ Route::get('/', function () {
 // Auth routes
 Auth::routes(['verify' => true]);
 
-// Profile routes
+// Profile routes - Accessible to all authenticated users
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Main profile routes
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::post('/profile/photo', [ProfileController::class, 'updateProfilePhoto'])->name('profile.photo.update');
     Route::delete('/profile/photo', [ProfileController::class, 'deleteProfilePhoto'])->name('profile.photo.delete');
+    
+    // Profile update routes
+    Route::post('/profile/personal', [ProfileController::class, 'updatePersonalInfo'])->name('profile.personal.update');
+    Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+    Route::post('/profile/employment', [ProfileController::class, 'updateEmploymentInfo'])->name('profile.employment.update');
+    
+    // Profile settings routes
     Route::get('/profile/settings', [ProfileSettingsController::class, 'index'])->name('profile.settings');
+    Route::post('/profile/settings/preferences', [ProfileSettingsController::class, 'updatePreferences'])->name('profile.settings.preferences');
+    Route::post('/profile/settings/privacy', [ProfileSettingsController::class, 'updatePrivacy'])->name('profile.settings.privacy');
+    Route::post('/profile/settings/notifications', [ProfileSettingsController::class, 'updateNotifications'])->name('profile.settings.notifications');
 });
 
 // Dashboard routes

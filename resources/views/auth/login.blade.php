@@ -4,175 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BiPSU HRMIS</title>
-    @vite('resources/css/app.css')
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <style>
-        /* --- BiPSU Theme Gradient Background --- */
-        .light-gray-bg {
-            background: linear-gradient(135deg, #fef5cc 0%, #d4e4ff 50%, #fef0b3 100%);
-            /* Vibrant blend of yellow and blue matching BiPSU colors */
-        }
-        /* ------------------------------------------------- */
-
-        .form-container {
-            perspective: 1000px;
-            position: relative;
-            height: 100%;
-        }
-        .form-flip {
-            transform-style: preserve-3d;
-            transition: transform 0.8s;
-            position: relative;
-            width: 100%;
-            min-height: 600px;
-        }
-        .form-flip.flipped {
-            transform: rotateY(180deg);
-        }
-        .form-front, .form-back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            top: 0;
-            left: 0;
-            overflow-y: auto;
-        }
-        .form-front {
-            z-index: 2;
-        }
-        .form-back {
-            transform: rotateY(180deg);
-        }
-        .input-container {
-            position: relative;
-            margin-bottom: 1.5rem;
-        }
-        .input-field {
-            width: 100%;
-            padding: 0.75rem 1rem 0.75rem 2.5rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        }
-        .input-field:focus {
-            border-color: #1e3a8a; /* Updated to match sidebar blue */
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1); /* Updated to match sidebar blue */
-        }
-        .input-icon {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #9ca3af;
-        }
-        .password-toggle {
-            position: absolute;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #9ca3af;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-        .password-toggle:hover {
-            color: #1e3a8a; /* Updated to match sidebar blue */
-        }
-        
-        /* --- IMPROVED LEFT PANEL STYLES (From previous response) --- */
-        .university-bg {
-            /* Lighter overlay to show image */
-            background-image: linear-gradient(rgba(30, 58, 138, 0.7), rgba(30, 58, 138, 0.8)), url('assets/images/uni_photo.jpg'); 
-            background-size: cover;
-            background-position: center;
-        }
-        
-        .btn-primary:hover {
-            background-color: #1d4ed8; /* A standard, lighter Tailwind blue (blue-700/600 equivalent) */
-            transform: translateY(-1px); 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-        }
-        
-        .feature-divider {
-            width: 3rem;
-            height: 3px;
-            background-color: #FFCC00; /* Secondary brand color (gold) */
-            margin: 1rem 0 1.5rem 0;
-            border-radius: 9999px;
-        }
-        /* --------------------------------------------------------- */
-
-        .error-message {
-            color: #ef4444;
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
-        }
-        .btn-primary {
-            background-color: #1e3a8a; /* Dark blue from sidebar */
-            color: white;
-            padding: 0.625rem 1.25rem;
-            border-radius: 0.375rem;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-        .btn-primary:hover {
-            background-color: #FFCC00; /* Lighter blue/Gold for hover */
-        }
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 1.5rem 0;
-        }
-        .divider::before, .divider::after {
-            content: "";
-            flex: 1;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .divider-text {
-            padding: 0 1rem;
-            color: #6b7280;
-            font-size: 0.875rem;
-        }
-        .social-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.5rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.375rem;
-            background-color: white;
-            transition: all 0.3s;
-        }
-        .social-btn:hover {
-            background-color: #f9fafb;
-        }
-        .form-radio {
-            display: flex;
-            align-items: center;
-            margin-right: 1rem;
-        }
-        .form-radio input {
-            margin-right: 0.5rem;
-        }
-        .form-checkbox {
-            display: flex;
-            align-items: center;
-        }
-        .form-checkbox input {
-            margin-right: 0.5rem;
-        }
-    </style>
 </head>
-<body class="min-h-screen flex items-center justify-center light-gray-bg"> <div class="container mx-auto px-4">
+<body class="min-h-screen flex items-center justify-center light-gray-bg">
+    <div class="container mx-auto px-4">
         <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
             <div class="md:flex">
-                <div class="hidden md:block md:w-1/2 university-bg p-12 text-white"> 
+                <!-- Left Side with Background Image -->
+                <div class="hidden md:block md:w-1/2 p-12 text-white" 
+                     style="background-image: linear-gradient(rgba(30, 58, 138, 0.55), rgba(30, 58, 138, 0.55)), url('{{ asset('assets/images/uni_photo.jpg') }}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
                     <div class="flex flex-col h-full justify-center">
-
                         <h1 class="text-5xl font-extrabold mb-3 tracking-tight">BiPSU HRMIS</h1>
                         <div class="feature-divider"></div>
 
@@ -180,7 +24,8 @@
 
                         <div class="space-y-6">
                             <div class="flex items-start">
-                                <i class="fas fa-users text-2xl mr-4 mt-1 text-yellow-300"></i> <div>
+                                <i class="fas fa-users text-2xl mr-4 mt-1 text-yellow-300"></i>
+                                <div>
                                     <h3 class="text-lg font-semibold">Employee Profiles (PDS)</h3>
                                     <p class="text-sm text-gray-200">Manage comprehensive Personal Data Sheets and records.</p>
                                 </div>
@@ -193,7 +38,7 @@
                                 </div>
                             </div>
                             <div class="flex items-start">
-                                <i class="fas fa-file-invoice-dollar text-2xl mr-4 mt-1 tezxt-yellow-300"></i>
+                                <i class="fas fa-file-invoice-dollar text-2xl mr-4 mt-1 text-yellow-300"></i>
                                 <div>
                                     <h3 class="text-lg font-semibold">Leave & Benefits</h3>
                                     <p class="text-sm text-gray-200">Streamlined application and approval for all leave types.</p>
@@ -207,8 +52,10 @@
                     </div>
                 </div>
 
+                <!-- Right Side with Forms -->
                 <div class="w-full md:w-1/2 p-8 form-container">
                     <div class="form-flip" id="formFlip">
+                        <!-- Login Form Front -->
                         <div class="form-front">
                             <div class="flex flex-col items-center mb-6">
                                 <img src="{{ asset('assets/images/one_bipsu.png') }}" alt="University Logo" class="h-15 mb-2"> 
@@ -278,6 +125,7 @@
                             </div>
                         </div>
 
+                        <!-- Register Form Back -->
                         <div class="form-back absolute top-0 left-0 w-full h-full bg-white p-8">
                             <div class="flex justify-between items-start mb-6">
                                 <div class="flex flex-col items-center w-full">
@@ -294,12 +142,12 @@
                                 @csrf
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div class="input-container">
-                                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                        <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
                                         <div class="relative">
                                             <i class="fas fa-user input-icon"></i>
                                             <input type="text" id="first_name" name="first_name" class="input-field" placeholder="John" value="{{ old('first_name') }}" required autocomplete="given-name">
                                         </div>
-                                        @error('name')
+                                        @error('first_name')
                                             <div class="error-message">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -428,11 +276,8 @@
         }
 
         // Auto-flip to register form if there are register errors
-        @if($errors->has('name') || $errors->has('email') || $errors->has('password') || $errors->has('employee_id') || $errors->has('department') || $errors->has('terms'))
+        @if($errors->has('first_name') || $errors->has('last_name') || $errors->has('email') || $errors->has('password') || $errors->has('employee_id') || $errors->has('department') || $errors->has('terms'))
             document.addEventListener('DOMContentLoaded', function() {
-                // Check if any of the registration errors exist and flip if necessary
-                // Note: Your original code checked 'role', which isn't in the registration form fields shown, 
-                // I've kept the error fields relevant to the visible form.
                 flipForm();
             });
         @endif
