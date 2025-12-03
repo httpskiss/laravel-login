@@ -26,35 +26,52 @@ class EmployeeTravelController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'travel_type' => 'required|string|in:official_time,official_business,personal_abroad,official_travel',
             'designation' => 'required|string|max:255',
             'destination' => 'required|string|max:255',
-            'inclusive_date_of_travel' => 'required|date',
+            'duration_type' => 'required|string|in:single_day,multiple_days',
+            'start_date' => 'required|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'inclusive_date_of_travel' => 'nullable|date',
             'purpose' => 'required|string',
-            'transportation' => 'nullable|in:college_vehicle,public_conveyance',
-            'estimated_expenses' => 'required|in:official_time,with_expenses',
-            'source_of_funds' => 'nullable|string'
+            'transportation' => 'required|string|in:university_vehicle,public_conveyance,private_vehicle',
+            'source_of_funds' => 'required|string|in:mooe,personal,other',
+            'other_funds_specification' => 'nullable|string|max:255',
         ]);
 
-        $travel = TravelAuthority::create([
-            'user_id' => Auth::id(),
-            'designation' => $validated['designation'],
-            'destination' => $validated['destination'],
-            'inclusive_date_of_travel' => $validated['inclusive_date_of_travel'],
-            'purpose' => $validated['purpose'],
-            'transportation' => $validated['transportation'],
-            'estimated_expenses' => $validated['estimated_expenses'],
-            'source_of_funds' => $validated['source_of_funds'],
-            'status' => 'pending'
-        ]);
+        try {
+            $travel = new TravelAuthority();
+            $travel->user_id = Auth::id();
+            $travel->fill($validated);
+            
+            // Set inclusive date based on duration type
+            if ($validated['duration_type'] === 'single_day') {
+                $travel->inclusive_date_of_travel = $validated['inclusive_date_of_travel'] ?? $validated['start_date'];
+                $travel->start_date = $validated['start_date'];
+                $travel->end_date = $validated['start_date'];
+            } else {
+                $travel->inclusive_date_of_travel = $validated['start_date'];
+                $travel->start_date = $validated['start_date'];
+                $travel->end_date = $validated['end_date'];
+            }
 
-        // Generate travel authority number
-        $travel->generateTravelAuthorityNo();
+            // Auto-set estimated expenses based on travel type
+            if (in_array($validated['travel_type'], ['official_time', 'official_business', 'official_travel'])) {
+                $travel->estimated_expenses = 'with_expenses';
+            } else {
+                $travel->estimated_expenses = 'official_time';
+            }
 
-        // Create initial approval records based on user's department/role
-        $this->createInitialApprovals($travel);
+            $travel->save();
 
-        return redirect()->route('employees.travel')
-            ->with('success', 'Travel authority submitted successfully!');
+            return redirect()->route('employees.travel.show', $travel)
+                ->with('success', 'Travel authority submitted successfully!');
+
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Failed to submit travel authority: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     public function show(TravelAuthority $travel)

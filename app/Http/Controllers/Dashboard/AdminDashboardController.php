@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\Activity;
 
-
 class AdminDashboardController extends Controller
 {
     public function adminDashboard()
@@ -31,12 +30,11 @@ class AdminDashboardController extends Controller
         $lastMonthYear = now()->subMonth()->year;
 
         // Get comprehensive payroll stats
-         $payrollData = DB::table('payrolls')
+        $payrollData = DB::table('payrolls')
             ->select(
                 DB::raw('SUM(net_salary) as total_payroll'),
                 DB::raw('SUM(CASE WHEN payroll_status = "paid" THEN net_salary ELSE 0 END) as processed'),
                 DB::raw('SUM(CASE WHEN payroll_status = "pending" THEN net_salary ELSE 0 END) as pending'),
-                // Use your actual role names here instead of "Faculty" and "user"
                 DB::raw('SUM(CASE WHEN EXISTS (SELECT 1 FROM model_has_roles WHERE model_has_roles.model_id = users.id AND model_has_roles.role_id IN (SELECT id FROM roles WHERE name = "Employee")) THEN payrolls.net_salary ELSE 0 END) as employee_payroll'),
                 DB::raw('SUM(CASE WHEN EXISTS (SELECT 1 FROM model_has_roles WHERE model_has_roles.model_id = users.id AND model_has_roles.role_id IN (SELECT id FROM roles WHERE name = "HR Manager")) THEN payrolls.net_salary ELSE 0 END) as hr_payroll')
             )
@@ -60,17 +58,13 @@ class AdminDashboardController extends Controller
         // Get notification count
         $unreadNotifications = $user->unreadNotifications()->count();
 
-
         // Update faculty count to use roles
         $stats = [
             'totalEmployees' => User::count(),
-            'facultyCount' => User::role('Employee')->count(), // Using spatie role scope
+            'facultyCount' => User::role('Employee')->count(),
         ];
 
         // Get attendance stats
-    
-
-        // Get recent check-ins
         $attendanceStats = DB::table('attendances')
             ->select(
                 DB::raw('COUNT(DISTINCT CASE WHEN status = "present" THEN user_id END) as present'),
@@ -95,7 +89,6 @@ class AdminDashboardController extends Controller
             ->orderBy('attendances.time_in', 'desc')
             ->take(5)
             ->get();
-
 
         // Get upcoming payments
         $upcomingPayments = DB::table('payrolls')
@@ -165,12 +158,65 @@ class AdminDashboardController extends Controller
         // Get recent employees
         $recentEmployees = User::with('roles')->latest()->take(5)->get();
 
+        // Get comprehensive gender distribution
+        $genderDistributionQuery = User::select('gender', DB::raw('count(*) as count'))
+            ->groupBy('gender')
+            ->get();
 
-        $genderStats = [
-            'male' => User::where('gender', 'Male')->count(),
-            'female' => User::where('gender', 'Female')->count(),
-            'other' => User::where('gender', 'Other')->count()
+        $genderDistribution = [];
+        foreach ($genderDistributionQuery as $item) {
+            $genderDistribution[$item->gender] = $item->count;
+        }
+
+        // Get sex distribution
+        $sexDistributionQuery = User::select('sex', DB::raw('count(*) as count'))
+            ->groupBy('sex')
+            ->get();
+
+        $sexDistribution = [];
+        foreach ($sexDistributionQuery as $item) {
+            $sexDistribution[$item->sex] = $item->count;
+        }
+
+        // Ensure all gender options are represented (even if count is 0)
+        $allGenderOptions = [
+            'Male', 'Female', 'Non-Binary', 'Genderqueer', 'Genderfluid', 'Agender',
+            'Bigender', 'Two-Spirit', 'Cisgender Male', 'Cisgender Female',
+            'Transgender Male', 'Transgender Female', 'Transmasculine', 'Transfeminine',
+            'Androgynous', 'Demiboy', 'Demigirl', 'Neutrois', 'Pangender',
+            'Gender Nonconforming', 'Questioning', 'Prefer not to say', 'Other'
         ];
+
+        $completeGenderDistribution = [];
+        foreach ($allGenderOptions as $gender) {
+            $completeGenderDistribution[$gender] = $genderDistribution[$gender] ?? 0;
+        }
+
+        // Handle null/empty values for gender
+        $nullGenderCount = ($genderDistribution[''] ?? 0) + ($genderDistribution[null] ?? 0);
+        if ($nullGenderCount > 0) {
+            $completeGenderDistribution['Not Specified'] = $nullGenderCount;
+        }
+
+        // Handle null/empty values for sex
+        $nullSexCount = ($sexDistribution[''] ?? 0) + ($sexDistribution[null] ?? 0);
+        if ($nullSexCount > 0) {
+            $sexDistribution['Not Specified'] = $nullSexCount;
+        }
+
+        // Ensure sex distribution has all expected keys
+        $completeSexDistribution = [
+            'Male' => $sexDistribution['Male'] ?? 0,
+            'Female' => $sexDistribution['Female'] ?? 0,
+            'Not Specified' => $sexDistribution['Not Specified'] ?? 0
+        ];
+        
+        // Get PWD statistics
+        $pwdStats = [
+            'Persons With Disabilities' => User::where('is_pwd', true)->count(),
+            'Without Disabilities' => User::where('is_pwd', false)->count()
+        ];
+
 
         return view('admin.dashboard', [
             'user' => $user,
@@ -187,7 +233,9 @@ class AdminDashboardController extends Controller
             'departmentColorMap' => $colorMap,
             'departments' => $departments,
             'recentEmployees' => $recentEmployees,
-            'genderStats' => $genderStats,
+            'genderDistribution' => $completeGenderDistribution,
+            'sexDistribution' => $completeSexDistribution,
+            'pwdStats' => $pwdStats,
             'totalEmployees' => $stats['totalEmployees']
         ]);
     }

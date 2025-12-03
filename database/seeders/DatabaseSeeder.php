@@ -13,6 +13,8 @@ class DatabaseSeeder extends Seeder
             PermissionTableSeeder::class,
             RolePermissionSeeder::class,
             CreateAdminUserSeeder::class,
+            DepartmentHeadsSeeder::class,
+            LeaveTypesSeeder::class,
         ]);
 
         // Create test users for each role (optional)

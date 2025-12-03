@@ -51,5 +51,17 @@ class RolePermissionSeeder extends Seeder
             'payroll-list', 'payroll-create', 'payroll-edit',
             'report-generate', 'report-export'
         ]);
+
+        // Accountant Role
+        $accountant = Role::firstOrCreate(['name' => 'Accountant', 'guard_name' => 'web']);
+        $accountant->syncPermissions([
+            'payroll-list', 'payroll-create', 'payroll-edit', 'payroll-delete', 'payroll-approve',
+            'report-generate', 'report-export',
+            'user-list', 'user-view-profile'
+        ]);
+
+        // University President Role
+        $president = Role::firstOrCreate(['name' => 'University President', 'guard_name' => 'web']);
+        $president->syncPermissions(Permission::all());
     }
 }

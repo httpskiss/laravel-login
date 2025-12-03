@@ -56,3 +56,20 @@ input:not(:placeholder-shown) + .floating-label {
     display: block;
     animation: fadeIn 0.3s ease-out;
 }
+
+.duration-type-option {
+    transition: all 0.2s ease;
+}
+
+.duration-type-option:hover {
+    border-color: #3b82f6;
+    background-color: #f8fafc;
+}
+
+.duration-type-option input:checked + span + i {
+    opacity: 1 !important;
+}
+
+.duration-type-option input:checked + span + i + span {
+    border-color: #3b82f6 !important;
+}

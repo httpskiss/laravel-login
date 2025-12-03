@@ -35,6 +35,28 @@
                         <label class="block text-sm font-medium text-gray-600">Destination</label>
                         <p class="mt-1 text-gray-900">{{ $travel->destination }}</p>
                     </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-600">Travel Type</label>
+                        <p class="mt-1 text-gray-900 capitalize">
+                            @if($travel->travel_type)
+                                {{ str_replace('_', ' ', $travel->travel_type) }}
+                            @else
+                                Not specified
+                            @endif
+                        </p>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-600">Duration Type</label>
+                        <p class="mt-1 text-gray-900 capitalize">
+                            @if($travel->duration_type)
+                                {{ str_replace('_', ' ', $travel->duration_type) }}
+                            @else
+                                Not specified
+                            @endif
+                        </p>
+                    </div>
                 </div>
 
                 <div>
@@ -45,17 +67,53 @@
                         </p>
                     </div>
 
+                    @if($travel->duration_type === 'multiple_days')
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-600">Travel Period</label>
+                        <p class="mt-1 text-gray-900">
+                            {{ $travel->start_date->format('M d, Y') }} to {{ $travel->end_date->format('M d, Y') }}
+                        </p>
+                    </div>
+                    @endif
+
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-600">Transportation</label>
                         <p class="mt-1 text-gray-900 capitalize">
-                            {{ $travel->transportation ? str_replace('_', ' ', $travel->transportation) : 'Not specified' }}
+                            @if($travel->transportation)
+                                {{ str_replace('_', ' ', $travel->transportation) }}
+                            @else
+                                Not specified
+                            @endif
                         </p>
                     </div>
 
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-600">Estimated Expenses</label>
                         <p class="mt-1 text-gray-900 capitalize">
-                            {{ str_replace('_', ' ', $travel->estimated_expenses) }}
+                            @if($travel->estimated_expenses)
+                                {{ str_replace('_', ' ', $travel->estimated_expenses) }}
+                            @else
+                                Not specified
+                            @endif
+                        </p>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-600">Source of Funds</label>
+                        <p class="mt-1 text-gray-900 capitalize">
+                            @if($travel->source_of_funds)
+                                @if($travel->source_of_funds === 'mooe')
+                                    MOOE (Maintenance and Other Operating Expenses)
+                                @elseif($travel->source_of_funds === 'personal')
+                                    Personal Funds
+                                @elseif($travel->source_of_funds === 'other')
+                                    Other Sources
+                                @else
+                                    {{ str_replace('_', ' ', $travel->source_of_funds) }}
+                                @endif
+                            @else
+                                Not specified
+                            @endif
                         </p>
                     </div>
                 </div>
@@ -66,10 +124,12 @@
                 <p class="mt-1 text-gray-900 bg-gray-50 p-4 rounded-lg">{{ $travel->purpose }}</p>
             </div>
 
+            @if($travel->other_funds_specification)
             <div class="mt-4">
-                <label class="block text-sm font-medium text-gray-600">Source of Funds</label>
-                <p class="mt-1 text-gray-900">{{ $travel->source_of_funds ?? 'Not specified' }}</p>
+                <label class="block text-sm font-medium text-gray-600">Other Funds Specification</label>
+                <p class="mt-1 text-gray-900">{{ $travel->other_funds_specification }}</p>
             </div>
+            @endif
         </div>
 
         <!-- Approval Status -->

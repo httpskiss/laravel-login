@@ -40,6 +40,10 @@ Route::get('/', function () {
             return redirect()->route('dept.dashboard');
         } elseif ($user->hasRole('Finance Officer')) {
             return redirect()->route('finance.dashboard');
+        } elseif ($user->hasRole('Accountant')) {
+            return redirect()->route('accountant.dashboard');
+        } elseif ($user->hasRole('University President')) {
+            return redirect()->route('president.dashboard');
         }
         
         return redirect()->route('employees.dashboard');
@@ -87,6 +91,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/{employee}', [EmployeeController::class, 'update'])->name('admin.employees.update');
             Route::delete('/{employee}', [EmployeeController::class, 'destroy'])->name('admin.employees.destroy');
             Route::post('/{employee}/upload-photo', [EmployeeController::class, 'uploadPhoto'])->name('admin.employees.upload-photo');
+
+            // Export routes
+            Route::get('/employees/export/excel', [EmployeeController::class, 'exportExcel'])->name('admin.employees.export.excel');
+            Route::get('/employees/export/pdf', [EmployeeController::class, 'exportPdf'])->name('admin.employees.export.pdf');
         });
 
         // Admin attendance routes
@@ -116,6 +124,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/{leave}/cancel', [AdminLeaveController::class, 'cancel'])->name('admin.leaves.cancel');
             Route::get('/export', [AdminLeaveController::class, 'export'])->name('admin.leaves.export');
             Route::get('/report', [AdminLeaveController::class, 'report'])->name('admin.leaves.report');
+            Route::get('/{leave}/download-pdf', [AdminLeaveController::class, 'downloadPdf'])->name('admin.leaves.download-pdf');
+            Route::get('/{leave}/view-pdf', [AdminLeaveController::class, 'viewPdf'])->name('admin.leaves.view-pdf');
         });
 
         // Admin travel routes
@@ -297,6 +307,95 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return view('admin.settings');
         })->name('finance.settings');
     });
+
+    // Accountant routes
+    Route::prefix('accountant')->middleware('role:Accountant')->group(function () {
+        Route::get('/dashboard', function () {
+            return view('admin.dashboard');
+        })->name('accountant.dashboard');
+        
+        Route::get('/attendance', function () {
+            return view('admin.attendance');
+        })->name('accountant.attendance');
+        
+        Route::get('/leaves', function () {
+            return view('admin.leaves');
+        })->name('accountant.leaves');
+        
+        // Accountant payroll routes
+        Route::prefix('payroll')->group(function () {
+            Route::get('/', [PayrollController::class, 'index'])->name('accountant.payroll');
+            Route::post('/', [PayrollController::class, 'store'])->name('accountant.payroll.store');
+            Route::get('/create', [PayrollController::class, 'create'])->name('accountant.payroll.create');
+            Route::get('/{payroll}', [PayrollController::class, 'show'])->name('accountant.payroll.show');
+            Route::get('/{payroll}/edit', [PayrollController::class, 'edit'])->name('accountant.payroll.edit');
+            Route::put('/{payroll}', [PayrollController::class, 'update'])->name('accountant.payroll.update');
+            Route::delete('/{payroll}', [PayrollController::class, 'destroy'])->name('accountant.payroll.destroy');
+        });
+        
+        // Accountant travel routes
+        Route::prefix('travel')->group(function () {
+            Route::get('/', [AdminTravelController::class, 'index'])->name('accountant.travel');
+            Route::get('/{travel}', [AdminTravelController::class, 'show'])->name('accountant.travel.show');
+        });
+        
+        Route::get('/reports', function () {
+            return view('admin.reports');
+        })->name('accountant.reports');
+        
+        Route::get('/settings', function () {
+            return view('admin.settings');
+        })->name('accountant.settings');
+    });
+
+    // University President routes
+    Route::prefix('president')->middleware('role:University President')->group(function () {
+        Route::get('/dashboard', function () {
+            return view('admin.dashboard');
+        })->name('president.dashboard');
+        
+        Route::get('/attendance', function () {
+            return view('admin.attendance');
+        })->name('president.attendance');
+        
+        Route::get('/leaves', function () {
+            return view('admin.leaves');
+        })->name('president.leaves');
+        
+        // President employee access
+        Route::prefix('employees')->group(function () {
+            Route::get('/', [EmployeeController::class, 'index'])->name('president.employees');
+            Route::get('/{employee}', [EmployeeController::class, 'show'])->name('president.employees.show');
+        });
+        
+        // President payroll routes
+        Route::prefix('payroll')->group(function () {
+            Route::get('/', [PayrollController::class, 'index'])->name('president.payroll');
+        });
+        
+        // President travel routes
+        Route::prefix('travel')->group(function () {
+            Route::get('/', [AdminTravelController::class, 'index'])->name('president.travel');
+            Route::get('/{travel}', [AdminTravelController::class, 'show'])->name('president.travel.show');
+            Route::post('/{travel}/approve/{step}', [AdminTravelController::class, 'approveStep'])->name('president.travel.approve');
+        });
+
+        // President complaints routes
+        Route::prefix('complaints')->group(function () {
+            Route::get('/', [AdminComplaintController::class, 'index'])->name('president.complaints.index');
+            Route::get('/{complaint}', [AdminComplaintController::class, 'show'])->name('president.complaints.show');
+            Route::post('/{complaint}/status', [AdminComplaintController::class, 'updateStatus'])->name('president.complaints.update-status');
+            Route::post('/{complaint}/note', [AdminComplaintController::class, 'addNote'])->name('president.complaints.add-note');
+        });
+        
+        Route::get('/reports', function () {
+            return view('admin.reports');
+        })->name('president.reports');
+        
+        Route::get('/settings', function () {
+            return view('admin.settings');
+        })->name('president.settings');
+    });
     
     // Employee routes (for regular employees)
     Route::prefix('employees')->group(function () {
@@ -321,6 +420,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/', [EmployeeLeaveController::class, 'store'])->name('employees.leaves.store');
             Route::get('/{leave}', [EmployeeLeaveController::class, 'show'])->name('employees.leaves.show');
             Route::delete('/{leave}', [EmployeeLeaveController::class, 'destroy'])->name('employees.leaves.destroy');
+
+            Route::get('/{leave}/download-pdf', [EmployeeLeaveController::class, 'downloadPdf'])->name('employees.leaves.download-pdf');
+
+            Route::get('employees/leaves/{leave}/csc-computation', [EmployeeLeaveController::class, 'cscComputation'])
+            ->name('employees.leaves.csc-computation');
         });
 
         // Employee complaints

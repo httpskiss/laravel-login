@@ -100,34 +100,29 @@
                 </div>
             </div>
             
-            <!-- Gender Distribution Chart -->
+            <!-- Gender/Sex/PWD Distribution Chart -->
             <div class="bg-white rounded-xl shadow-md p-6 animate-fade-in" style="animation-delay: 0.3s">
-                <h2 class="text-lg font-semibold mb-4">Gender Distribution</h2>
-                <div class="chart-container" style="position: relative; height: 250px;">
-                    <canvas id="genderChart"></canvas>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold" id="distributionTitle">Gender Distribution</h2>
+                    <div class="flex space-x-2">
+                        <button id="genderViewBtn" class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg transition duration-150 ease-in-out">
+                            Gender
+                        </button>
+                        <button id="sexViewBtn" class="px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150 ease-in-out">
+                            Sex
+                        </button>
+                        <button id="pwdViewBtn" class="px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150 ease-in-out">
+                            PWD
+                        </button>
+                    </div>
                 </div>
-                <div class="mt-4 grid grid-cols-3 gap-2 text-center">
-                    @php
-                        $total = $genderStats['male'] + $genderStats['female'] + $genderStats['other'];
-                        $malePercentage = $total > 0 ? round(($genderStats['male'] / $total) * 100) : 0;
-                        $femalePercentage = $total > 0 ? round(($genderStats['female'] / $total) * 100) : 0;
-                        $otherPercentage = $total > 0 ? round(($genderStats['other'] / $total) * 100) : 0;
-                    @endphp
-                    <div class="p-2">
-                        <div class="text-xl font-bold text-blue-600">{{ $genderStats['male'] }}</div>
-                        <div class="text-xs text-gray-500">Male ({{ $malePercentage }}%)</div>
-                    </div>
-                    <div class="p-2">
-                        <div class="text-xl font-bold text-pink-600">{{ $genderStats['female'] }}</div>
-                        <div class="text-xs text-gray-500">Female ({{ $femalePercentage }}%)</div>
-                    </div>
-                    <div class="p-2">
-                        <div class="text-xl font-bold text-purple-600">{{ $genderStats['other'] }}</div>
-                        <div class="text-xs text-gray-500">Other ({{ $otherPercentage }}%)</div>
-                    </div>
+                <div class="chart-container" style="position: relative; height: 250px;">
+                    <canvas id="distributionChart"></canvas>
                 </div>
             </div>
         </div>
+
+        
 
         <!-- Enhanced Quick Actions -->
         <div class="mb-8 animate-fade-in" style="animation-delay: 0.4s">
@@ -396,29 +391,82 @@
             departmentChart.update();
         });
 
-        // Gender Chart
-        const genderCtx = document.getElementById('genderChart');
-        if (genderCtx) {
-            new Chart(genderCtx, {
+        // Gender/Sex/PWD Distribution Chart
+        const distributionCtx = document.getElementById('distributionChart');
+        let distributionChart = null;
+        let currentView = 'gender'; // 'gender', 'sex', or 'pwd'
+
+        // Data from backend
+        const genderData = @json($genderDistribution);
+        const sexData = @json($sexDistribution ?? ['Male' => 0, 'Female' => 0, 'Not Specified' => 0]);
+        const pwdData = @json($pwdStats ?? ['Persons With Disabilities' => 0, 'Without Disabilities' => 0]);
+
+        // Color palettes
+        const genderColors = [
+            'rgba(54, 162, 235, 0.7)',   // Blue - Male
+            'rgba(255, 99, 132, 0.7)',   // Pink - Female
+            'rgba(153, 102, 255, 0.7)',  // Purple - Other
+        ];
+
+        const sexColors = [
+            'rgba(54, 162, 235, 0.7)',   // Blue - Male
+            'rgba(255, 99, 132, 0.7)',   // Pink - Female
+            'rgba(169, 169, 169, 0.7)'   // Gray - Not Specified
+        ];
+
+        const pwdColors = [
+            'rgba(34, 197, 94, 0.7)',    // Green - With Disabilities
+            'rgba(59, 130, 246, 0.7)'    // Blue - Without Disabilities
+        ];
+
+        function initializeDistributionChart() {
+            if (distributionChart) {
+                distributionChart.destroy();
+            }
+
+            let data, colors, title;
+            
+            switch(currentView) {
+                case 'gender':
+                    data = genderData;
+                    colors = genderColors;
+                    title = 'Gender Distribution';
+                    break;
+                case 'sex':
+                    data = sexData;
+                    colors = sexColors;
+                    title = 'Sex Distribution';
+                    break;
+                case 'pwd':
+                    data = pwdData;
+                    colors = pwdColors;
+                    title = 'PWD Distribution';
+                    break;
+            }
+
+            document.getElementById('distributionTitle').textContent = title;
+
+            // Filter out zero values for cleaner chart
+            const labels = [];
+            const values = [];
+            const filteredColors = [];
+
+            Object.keys(data).forEach((key, index) => {
+                if (data[key] > 0) {
+                    labels.push(key);
+                    values.push(data[key]);
+                    filteredColors.push(colors[index % colors.length]);
+                }
+            });
+
+            distributionChart = new Chart(distributionCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Male', 'Female', 'Other'],
+                    labels: labels,
                     datasets: [{
-                        data: [
-                            {{ $genderStats['male'] }},
-                            {{ $genderStats['female'] }},
-                            {{ $genderStats['other'] }}
-                        ],
-                        backgroundColor: [
-                            'rgba(54, 162, 235, 0.7)',
-                            'rgba(255, 99, 132, 0.7)',
-                            'rgba(153, 102, 255, 0.7)'
-                        ],
-                        borderColor: [
-                            'rgba(54, 162, 235, 1)',
-                            'rgba(255, 99, 132, 1)',
-                            'rgba(153, 102, 255, 1)'
-                        ],
+                        data: values,
+                        backgroundColor: filteredColors,
+                        borderColor: filteredColors.map(color => color.replace('0.7', '1')),
                         borderWidth: 1
                     }]
                 },
@@ -428,12 +476,154 @@
                     plugins: {
                         legend: {
                             position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: {
+                                    size: 10
+                                },
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    if (data.labels.length && data.datasets.length) {
+                                        return data.labels.map((label, i) => {
+                                            const value = data.datasets[0].data[i];
+                                            const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                            return {
+                                                text: `${label}: ${value} (${percentage}%)`,
+                                                fillStyle: data.datasets[0].backgroundColor[i],
+                                                strokeStyle: data.datasets[0].borderColor[i],
+                                                lineWidth: 1,
+                                                hidden: false,
+                                                index: i
+                                            };
+                                        });
+                                    }
+                                    return [];
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
                         }
                     },
-                    cutout: '70%'
+                    cutout: '60%'
+                }
+            });
+
+            updateDistributionStats(data);
+        }
+
+        function updateDistributionStats(data) {
+            const statsContainer = document.getElementById('distributionStats');
+            const total = Object.values(data).reduce((sum, value) => sum + value, 0);
+            
+            let statsHTML = '<div class="grid grid-cols-2 gap-2 text-center">';
+            
+            Object.keys(data).forEach(key => {
+                if (data[key] > 0) {
+                    const percentage = total > 0 ? ((data[key] / total) * 100).toFixed(1) : 0;
+                    
+                    // Determine color based on current view
+                    let textColor = 'text-gray-700';
+                    let bgHover = 'hover:bg-gray-50';
+                    
+                    if (currentView === 'gender') {
+                        if (key === 'Male') {
+                            textColor = 'text-blue-700';
+                            bgHover = 'hover:bg-blue-50';
+                        } else if (key === 'Female') {
+                            textColor = 'text-pink-700';
+                            bgHover = 'hover:bg-pink-50';
+                        } else {
+                            textColor = 'text-purple-700';
+                            bgHover = 'hover:bg-purple-50';
+                        }
+                    } else if (currentView === 'sex') {
+                        if (key === 'Male') {
+                            textColor = 'text-blue-700';
+                            bgHover = 'hover:bg-blue-50';
+                        } else if (key === 'Female') {
+                            textColor = 'text-pink-700';
+                            bgHover = 'hover:bg-pink-50';
+                        } else {
+                            textColor = 'text-gray-700';
+                            bgHover = 'hover:bg-gray-50';
+                        }
+                    } else if (currentView === 'pwd') {
+                        if (key === 'Persons With Disabilities') {
+                            textColor = 'text-green-700';
+                            bgHover = 'hover:bg-green-50';
+                        } else {
+                            textColor = 'text-blue-700';
+                            bgHover = 'hover:bg-blue-50';
+                        }
+                    }
+                    
+                    statsHTML += `
+                        <div class="p-2 border border-gray-100 rounded-lg ${bgHover} transition-colors duration-200">
+                            <div class="text-sm font-bold ${textColor}">${data[key]}</div>
+                            <div class="text-xs text-gray-500 truncate">${key}</div>
+                            <div class="text-xs ${textColor.replace('700', '500')}">${percentage}%</div>
+                        </div>
+                    `;
+                }
+            });
+            
+            statsHTML += '</div>';
+            statsContainer.innerHTML = statsHTML;
+        }
+
+        // View toggle buttons
+        function updateButtonStyles(activeButton) {
+            const buttons = {
+                gender: document.getElementById('genderViewBtn'),
+                sex: document.getElementById('sexViewBtn'),
+                pwd: document.getElementById('pwdViewBtn')
+            };
+
+            Object.keys(buttons).forEach(key => {
+                if (key === activeButton) {
+                    buttons[key].className = 'px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg transition duration-150 ease-in-out';
+                } else {
+                    buttons[key].className = 'px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150 ease-in-out';
                 }
             });
         }
+
+        document.getElementById('genderViewBtn').addEventListener('click', function() {
+            if (currentView !== 'gender') {
+                currentView = 'gender';
+                updateButtonStyles('gender');
+                initializeDistributionChart();
+            }
+        });
+
+        document.getElementById('sexViewBtn').addEventListener('click', function() {
+            if (currentView !== 'sex') {
+                currentView = 'sex';
+                updateButtonStyles('sex');
+                initializeDistributionChart();
+            }
+        });
+
+        document.getElementById('pwdViewBtn').addEventListener('click', function() {
+            if (currentView !== 'pwd') {
+                currentView = 'pwd';
+                updateButtonStyles('pwd');
+                initializeDistributionChart();
+            }
+        });
+
+        // Initialize the chart
+        initializeDistributionChart();
 
         function showToast(message, type = 'success') {
             const toast = document.createElement('div');
