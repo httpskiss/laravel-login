@@ -40,10 +40,6 @@ Route::get('/', function () {
             return redirect()->route('dept.dashboard');
         } elseif ($user->hasRole('Finance Officer')) {
             return redirect()->route('finance.dashboard');
-        } elseif ($user->hasRole('Accountant')) {
-            return redirect()->route('accountant.dashboard');
-        } elseif ($user->hasRole('University President')) {
-            return redirect()->route('president.dashboard');
         }
         
         return redirect()->route('employees.dashboard');
@@ -306,95 +302,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/settings', function () {
             return view('admin.settings');
         })->name('finance.settings');
-    });
-
-    // Accountant routes
-    Route::prefix('accountant')->middleware('role:Accountant')->group(function () {
-        Route::get('/dashboard', function () {
-            return view('admin.dashboard');
-        })->name('accountant.dashboard');
-        
-        Route::get('/attendance', function () {
-            return view('admin.attendance');
-        })->name('accountant.attendance');
-        
-        Route::get('/leaves', function () {
-            return view('admin.leaves');
-        })->name('accountant.leaves');
-        
-        // Accountant payroll routes
-        Route::prefix('payroll')->group(function () {
-            Route::get('/', [PayrollController::class, 'index'])->name('accountant.payroll');
-            Route::post('/', [PayrollController::class, 'store'])->name('accountant.payroll.store');
-            Route::get('/create', [PayrollController::class, 'create'])->name('accountant.payroll.create');
-            Route::get('/{payroll}', [PayrollController::class, 'show'])->name('accountant.payroll.show');
-            Route::get('/{payroll}/edit', [PayrollController::class, 'edit'])->name('accountant.payroll.edit');
-            Route::put('/{payroll}', [PayrollController::class, 'update'])->name('accountant.payroll.update');
-            Route::delete('/{payroll}', [PayrollController::class, 'destroy'])->name('accountant.payroll.destroy');
-        });
-        
-        // Accountant travel routes
-        Route::prefix('travel')->group(function () {
-            Route::get('/', [AdminTravelController::class, 'index'])->name('accountant.travel');
-            Route::get('/{travel}', [AdminTravelController::class, 'show'])->name('accountant.travel.show');
-        });
-        
-        Route::get('/reports', function () {
-            return view('admin.reports');
-        })->name('accountant.reports');
-        
-        Route::get('/settings', function () {
-            return view('admin.settings');
-        })->name('accountant.settings');
-    });
-
-    // University President routes
-    Route::prefix('president')->middleware('role:University President')->group(function () {
-        Route::get('/dashboard', function () {
-            return view('admin.dashboard');
-        })->name('president.dashboard');
-        
-        Route::get('/attendance', function () {
-            return view('admin.attendance');
-        })->name('president.attendance');
-        
-        Route::get('/leaves', function () {
-            return view('admin.leaves');
-        })->name('president.leaves');
-        
-        // President employee access
-        Route::prefix('employees')->group(function () {
-            Route::get('/', [EmployeeController::class, 'index'])->name('president.employees');
-            Route::get('/{employee}', [EmployeeController::class, 'show'])->name('president.employees.show');
-        });
-        
-        // President payroll routes
-        Route::prefix('payroll')->group(function () {
-            Route::get('/', [PayrollController::class, 'index'])->name('president.payroll');
-        });
-        
-        // President travel routes
-        Route::prefix('travel')->group(function () {
-            Route::get('/', [AdminTravelController::class, 'index'])->name('president.travel');
-            Route::get('/{travel}', [AdminTravelController::class, 'show'])->name('president.travel.show');
-            Route::post('/{travel}/approve/{step}', [AdminTravelController::class, 'approveStep'])->name('president.travel.approve');
-        });
-
-        // President complaints routes
-        Route::prefix('complaints')->group(function () {
-            Route::get('/', [AdminComplaintController::class, 'index'])->name('president.complaints.index');
-            Route::get('/{complaint}', [AdminComplaintController::class, 'show'])->name('president.complaints.show');
-            Route::post('/{complaint}/status', [AdminComplaintController::class, 'updateStatus'])->name('president.complaints.update-status');
-            Route::post('/{complaint}/note', [AdminComplaintController::class, 'addNote'])->name('president.complaints.add-note');
-        });
-        
-        Route::get('/reports', function () {
-            return view('admin.reports');
-        })->name('president.reports');
-        
-        Route::get('/settings', function () {
-            return view('admin.settings');
-        })->name('president.settings');
     });
     
     // Employee routes (for regular employees)

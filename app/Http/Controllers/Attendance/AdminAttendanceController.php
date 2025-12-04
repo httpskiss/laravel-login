@@ -10,6 +10,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Stevebauman\Location\Facades\Location;
 
+use App\Models\Employee;
+use App\Models\Department;
+use App\Models\AttendanceType;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 class AdminAttendanceController extends Controller
 {
     public function __construct()
@@ -20,341 +26,346 @@ class AdminAttendanceController extends Controller
         $this->middleware('permission:attendance-delete', ['only' => ['destroy']]);
     }
 
-    public function index(Request $request)
+public function index(Request $request)
     {
-        $query = Attendance::with(['user', 'regularizedBy'])
-            ->orderBy('date', 'desc')
-            ->orderBy('created_at', 'desc');
+        // Date range handling
+        $startDate = $request->get('start_date')
+            ? Carbon::parse($request->get('start_date'))
+            : now()->startOfMonth();
 
-        // Filter by date range if provided
-        if ($request->has('start_date')) {
-            $query->where('date', '>=', $request->start_date);
-        }
-        if ($request->has('end_date')) {
-            $query->where('date', '<=', $request->end_date);
+        $endDate = $request->get('end_date')
+            ? Carbon::parse($request->get('end_date'))
+            : now()->endOfMonth();
+
+        // Build query for all employees
+        $query = Attendance::with(['employee', 'attendanceType', 'attendanceSource'])
+            ->whereBetween('created_at', [$startDate, $endDate]);
+
+        // Apply filters
+        if ($request->has('employee_id') && $request->employee_id) {
+            $query->where('employee_id', $request->employee_id);
         }
 
-        // Filter by department if user is department head
-        if (auth()->user()->hasRole('Department Head')) {
-            $query->whereHas('user', function($q) {
-                $q->where('department', auth()->user()->department);
+        if ($request->has('department_id') && $request->department_id) {
+            $query->whereHas('employee', function($q) use ($request) {
+                $q->where('department_id', $request->department_id);
             });
         }
 
-        // Filter by employee if provided
-        if ($request->has('employee_id')) {
-            $query->where('user_id', $request->employee_id);
+        if ($request->has('attendance_type_id') && $request->attendance_type_id) {
+            $query->where('attendance_type_id', $request->attendance_type_id);
         }
 
-        // Filter by status if provided
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->whereHas('employee', function($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%");
+            });
         }
 
-        $attendances = $query->paginate(20);
+        $attendances = $query->orderBy('created_at', 'desc')->paginate(20);
 
-        $employees = User::orderBy('first_name')->get();
-        $departments = User::select('department')->distinct()->orderBy('department')->pluck('department');
+        // Get filter options
+        $employees = Employee::whereHas('jobStatus', function($q) {
+            $q->where('name', 'Active');
+        })->orderBy('first_name')->get();
 
-        if ($request->wantsJson()) {
-            return response()->json([
-                'attendances' => $attendances,
-                'employees' => $employees,
-                'departments' => $departments
-            ]);
-        }
+        $departments = Department::orderBy('name')->get();
+        $attendanceTypes = AttendanceType::all();
 
-        return view('admin.attendance', [
-            'attendances' => $attendances,
-            'employees' => $employees,
-            'departments' => $departments
-        ]);
+        // Overall statistics
+        $stats = $this->getOverallStats($startDate, $endDate);
+
+        return view('admin.attendance.index', compact(
+            'attendances',
+            'employees',
+            'departments',
+            'attendanceTypes',
+            'stats',
+            'startDate',
+            'endDate'
+        ));
     }
 
-    public function store(Request $request)
+    /**
+     * Get overall attendance statistics for admin dashboard
+     */
+    private function getOverallStats($startDate, $endDate)
     {
-        $validator = Validator::make($request->all(), [
-            'user_id' => 'required|exists:users,id',
-            'date' => 'required|date',
-            'time_in' => 'nullable|date_format:H:i',
-            'time_out' => 'nullable|date_format:H:i|after:time_in',
-            'status' => 'required|in:present,absent,late,on_leave,half_day',
-            'notes' => 'nullable|string|max:500',
-            'biometric_id' => 'nullable|string|max:255',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
-        ]);
+        $attendances = Attendance::with(['attendanceType', 'attendanceSource'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->get();
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        // Get location from coordinates if provided
-        $location = null;
-        if ($request->latitude && $request->longitude) {
-            $position = Location::get($request->ip());
-            $location = $position ? $position->cityName . ', ' . $position->countryName : null;
-        }
-
-        // Calculate total hours if both time_in and time_out are provided
-        $totalHours = null;
-        if ($request->time_in && $request->time_out) {
-            $start = \Carbon\Carbon::parse($request->time_in);
-            $end = \Carbon\Carbon::parse($request->time_out);
-            $totalHours = round($end->diffInMinutes($start) / 60, 2);
-        }
-
-        $attendance = Attendance::create([
-            'user_id' => $request->user_id,
-            'date' => $request->date,
-            'time_in' => $request->time_in,
-            'time_out' => $request->time_out,
-            'total_hours' => $totalHours,
-            'status' => $request->status,
-            'notes' => $request->notes,
-            'ip_address' => $request->ip(),
-            'device_info' => $request->header('User-Agent'),
-            'location' => $location,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-            'biometric_id' => $request->biometric_id,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Attendance record created successfully',
-            'attendance' => $attendance->load('user')
-        ]);
-    }
-
-    public function update(Request $request, Attendance $attendance)
-    {
-        if (auth()->user()->hasRole('Department Head') && 
-            $attendance->user->department !== auth()->user()->department) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You can only edit attendance for employees in your department'
-            ], 403);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'date' => 'sometimes|date',
-            'time_in' => 'nullable|date_format:H:i',
-            'time_out' => 'nullable|date_format:H:i|after:time_in',
-            'status' => 'sometimes|in:present,absent,late,on_leave,half_day',
-            'notes' => 'nullable|string|max:500',
-            'is_regularized' => 'sometimes|boolean',
-            'regularization_reason' => 'required_if:is_regularized,true|string|max:500',
-            'biometric_id' => 'nullable|string|max:255',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $data = $request->only(['date', 'time_in', 'time_out', 'status', 'notes', 'is_regularized', 'regularization_reason', 'biometric_id']);
-
-        if ($request->has('time_in') || $request->has('time_out')) {
-            $timeIn = $request->time_in ?? $attendance->time_in;
-            $timeOut = $request->time_out ?? $attendance->time_out;
+        // Count by type - use correct filtering
+        $totalCheckins = 0;
+        $totalCheckouts = 0;
+        $biometricCount = 0;
+        $manualCount = 0;
+        
+        Log::info('=== ATTENDANCE DEBUG V2 ===');
+        Log::info('Total records: ' . $attendances->count());
+        
+        foreach ($attendances as $record) {
+            $typeName = $record->attendanceType ? $record->attendanceType->name : 'NULL';
+            $sourceName = $record->attendanceSource ? $record->attendanceSource->name : 'NULL';
             
-            if ($timeIn && $timeOut) {
-                $start = \Carbon\Carbon::parse($timeIn);
-                $end = \Carbon\Carbon::parse($timeOut);
-                $data['total_hours'] = round($end->diffInMinutes($start) / 60, 2);
-            } else {
-                $data['total_hours'] = null;
+            // Type names are "in" and "out" (lowercase)
+            if ($record->attendanceType && strtolower($record->attendanceType->name) === 'in') {
+                $totalCheckins++;
+            }
+            if ($record->attendanceType && strtolower($record->attendanceType->name) === 'out') {
+                $totalCheckouts++;
+            }
+            // Source names are "biometric" and "manual" (lowercase)
+            if ($record->attendanceSource && strtolower($record->attendanceSource->name) === 'biometric') {
+                $biometricCount++;
+            }
+            if ($record->attendanceSource && strtolower($record->attendanceSource->name) === 'manual') {
+                $manualCount++;
+            }
+        }
+        
+        Log::info('Results - Checkins: ' . $totalCheckins . ', Checkouts: ' . $totalCheckouts . ', Bio: ' . $biometricCount . ', Manual: ' . $manualCount);
+
+        // Unique employees who checked in
+        $uniqueEmployees = 0;
+        $checkedInEmployees = [];
+        foreach ($attendances as $record) {
+            if ($record->attendanceType && strtolower($record->attendanceType->name) === 'in') {
+                $checkedInEmployees[$record->employee_id] = true;
+            }
+        }
+        $uniqueEmployees = count($checkedInEmployees);
+
+        return [
+            'total_checkins' => $totalCheckins,
+            'total_checkouts' => $totalCheckouts,
+            'biometric_count' => $biometricCount,
+            'manual_count' => $manualCount,
+            'unique_employees' => $uniqueEmployees,
+            'total_records' => $attendances->count(),
+        ];
+    }
+
+    /**
+     * Show individual employee's attendance details
+     */
+    public function show($employeeId, Request $request)
+    {
+        $employee = Employee::findOrFail($employeeId);
+
+        $startDate = $request->get('start_date')
+            ? Carbon::parse($request->get('start_date'))
+            : now()->startOfMonth();
+
+        $endDate = $request->get('end_date')
+            ? Carbon::parse($request->get('end_date'))
+            : now()->endOfMonth();
+
+        $attendances = Attendance::with(['attendanceType', 'attendanceSource'])
+            ->where('employee_id', $employeeId)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Calculate employee-specific stats
+        $stats = $this->getEmployeeStats($employeeId, $startDate, $endDate);
+
+        return view('admin.attendance.show', compact(
+            'employee',
+            'attendances',
+            'stats',
+            'startDate',
+            'endDate'
+        ));
+    }
+
+    /**
+     * Get statistics for a specific employee
+     */
+    private function getEmployeeStats($employeeId, $startDate, $endDate)
+    {
+        $attendances = Attendance::with('attendanceType')
+            ->where('employee_id', $employeeId)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->get();
+
+        // Count using foreach loop
+        $checkins = 0;
+        $checkouts = 0;
+        foreach ($attendances as $record) {
+            if ($record->attendanceType && strtolower($record->attendanceType->name) === 'in') {
+                $checkins++;
+            }
+            if ($record->attendanceType && strtolower($record->attendanceType->name) === 'out') {
+                $checkouts++;
+            }
+        }
+        
+        $totalHours = $this->calculateTotalHours($attendances);
+
+        return [
+            'total_days' => $checkins,
+            'total_hours' => $totalHours,
+            'avg_hours_per_day' => $checkins > 0 ? round($totalHours / $checkins, 1) : 0,
+            'total_checkins' => $checkins,
+            'total_checkouts' => $checkouts,
+        ];
+    }
+
+    /**
+     * Calculate total hours from attendance records
+     */
+    private function calculateTotalHours($attendances)
+    {
+        $totalMinutes = 0;
+
+        $groupedByDate = $attendances->groupBy(function($item) {
+            return $item->created_at->format('Y-m-d');
+        });
+
+        foreach ($groupedByDate as $date => $records) {
+            $checkin = null;
+            $checkout = null;
+            
+            // Find check-in and check-out records
+            foreach ($records as $record) {
+                if ($record->attendanceType && strtolower($record->attendanceType->name) === 'in') {
+                    $checkin = $record;
+                }
+                if ($record->attendanceType && strtolower($record->attendanceType->name) === 'out') {
+                    $checkout = $record;
+                }
+            }
+
+            if ($checkin && $checkout) {
+                $totalMinutes += $checkout->created_at->diffInMinutes($checkin->created_at);
             }
         }
 
-        if ($request->is_regularized) {
-            $data['regularized_by'] = auth()->id();
-            $data['regularized_at'] = now();
-        }
-
-        $attendance->update($data);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Attendance record updated successfully',
-            'attendance' => $attendance->fresh()->load('user')
-        ]);
+        return round($totalMinutes / 60, 1);
     }
 
-    public function destroy(Attendance $attendance)
+    /**
+     * Manual attendance entry (for corrections or late entries)
+     */
+    public function create()
     {
-        if (auth()->user()->hasRole('Department Head') && 
-            $attendance->user->department !== auth()->user()->department) {
+        $employees = Employee::whereHas('jobStatus', function($q) {
+            $q->where('name', 'Active');
+        })->orderBy('first_name')->get();
+
+        $attendanceTypes = AttendanceType::all();
+
+        return view('admin.attendance.create', compact('employees', 'attendanceTypes'));
+    }
+
+    /**
+     * Store manual attendance entry
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'employee_id' => 'required|exists:tbl_employee,id',
+            'attendance_type_id' => 'required|exists:tbl_attendance_types,id',
+            'attendance_date' => 'required|date',
+            'attendance_time' => 'required',
+            'remarks' => 'nullable|string',
+        ]);
+
+        try {
+            $attendanceDateTime = Carbon::parse($request->attendance_date . ' ' . $request->attendance_time);
+
+            Attendance::create([
+                'employee_id' => $request->employee_id,
+                'attendance_type_id' => $request->attendance_type_id,
+                'attendance_source_id' => 3, // Manual source
+                'remarks' => $request->remarks,
+                'created_at' => $attendanceDateTime,
+                'updated_at' => $attendanceDateTime,
+            ]);
+
+            return redirect()->route('attendance.index')
+                ->with('success', 'Manual attendance record created successfully.');
+
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Failed to create attendance record: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Delete attendance record
+     */
+    public function destroy($id)
+    {
+        try {
+            $attendance = Attendance::findOrFail($id);
+            $attendance->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Attendance record deleted successfully.'
+            ]);
+
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'You can only delete attendance for employees in your department'
-            ], 403);
+                'message' => 'Failed to delete attendance record: ' . $e->getMessage()
+            ], 500);
         }
-
-        $attendance->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Attendance record deleted successfully'
-        ]);
     }
 
-    public function getDepartmentData(Request $request)
-    {
-        $startDate = $request->input('start_date', now()->startOfMonth()->format('Y-m-d'));
-        $endDate = $request->input('end_date', now()->endOfMonth()->format('Y-m-d'));
-
-        $departments = User::select('department')
-            ->distinct()
-            ->orderBy('department')
-            ->pluck('department');
-
-        $data = [];
-        foreach ($departments as $department) {
-            $users = User::where('department', $department)->pluck('id');
-            
-            $present = Attendance::whereIn('user_id', $users)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->where('status', 'present')
-                ->count();
-
-            $absent = Attendance::whereIn('user_id', $users)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->where('status', 'absent')
-                ->count();
-
-            $late = Attendance::whereIn('user_id', $users)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->where('status', 'late')
-                ->count();
-
-            $onLeave = Attendance::whereIn('user_id', $users)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->where('status', 'on_leave')
-                ->count();
-
-            $halfDay = Attendance::whereIn('user_id', $users)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->where('status', 'half_day')
-                ->count();
-
-            $data[] = [
-                'department' => $department,
-                'present' => $present,
-                'absent' => $absent,
-                'late' => $late,
-                'on_leave' => $onLeave,
-                'half_day' => $halfDay,
-            ];
-        }
-
-        return response()->json($data);
-    }
-
-    public function report(Request $request)
-    {
-        $startDate = $request->input('start_date', now()->startOfMonth()->format('Y-m-d'));
-        $endDate = $request->input('end_date', now()->endOfMonth()->format('Y-m-d'));
-        $department = $request->input('department');
-        $employeeId = $request->input('employee_id');
-
-        $query = Attendance::with('user')
-            ->whereBetween('date', [$startDate, $endDate]);
-
-        if ($department) {
-            $query->whereHas('user', function($q) use ($department) {
-                $q->where('department', $department);
-            });
-        }
-
-        if ($employeeId) {
-            $query->where('user_id', $employeeId);
-        }
-
-        $attendances = $query->orderBy('date')->get();
-
-        return view('admin.attendance-report', [
-            'attendances' => $attendances,
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'department' => $department,
-            'employee_id' => $employeeId
-        ]);
-    }
-
+    /**
+     * Export attendance records to CSV
+     */
     public function export(Request $request)
     {
-        $startDate = $request->input('start_date', now()->startOfMonth()->format('Y-m-d'));
-        $endDate = $request->input('end_date', now()->endOfMonth()->format('Y-m-d'));
-        $department = $request->input('department');
-        $employeeId = $request->input('employee_id');
+        $startDate = $request->get('start_date')
+            ? Carbon::parse($request->get('start_date'))
+            : now()->startOfMonth();
 
-        $query = Attendance::with('user')
-            ->whereBetween('date', [$startDate, $endDate]);
+        $endDate = $request->get('end_date')
+            ? Carbon::parse($request->get('end_date'))
+            : now()->endOfMonth();
 
-        if ($department) {
-            $query->whereHas('user', function($q) use ($department) {
-                $q->where('department', $department);
+        $query = Attendance::with(['employee', 'attendanceType', 'attendanceSource'])
+            ->whereBetween('created_at', [$startDate, $endDate]);
+
+        // Apply same filters as index
+        if ($request->has('employee_id') && $request->employee_id) {
+            $query->where('employee_id', $request->employee_id);
+        }
+
+        if ($request->has('department_id') && $request->department_id) {
+            $query->whereHas('employee', function($q) use ($request) {
+                $q->where('department_id', $request->department_id);
             });
         }
 
-        if ($employeeId) {
-            $query->where('user_id', $employeeId);
-        }
+        $attendances = $query->orderBy('created_at', 'desc')->get();
 
-        $attendances = $query->orderBy('date')->get();
+        $filename = 'attendance_' . $startDate->format('Y-m-d') . '_to_' . $endDate->format('Y-m-d') . '.csv';
 
-        $fileName = 'attendance-report-' . now()->format('Y-m-d') . '.csv';
         $headers = [
-            "Content-type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=$fileName",
-            "Pragma" => "no-cache",
-            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
-            "Expires" => "0"
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
         $callback = function() use ($attendances) {
             $file = fopen('php://output', 'w');
-            
-            // Header row
-            fputcsv($file, [
-                'Employee ID',
-                'Employee Name',
-                'Department',
-                'Date',
-                'Time In',
-                'Time Out',
-                'Total Hours',
-                'Status',
-                'Notes',
-                'Regularized',
-                'Regularized Reason',
-                'Biometric ID',
-                'Location'
-            ]);
 
-            // Data rows
+            // Headers
+            fputcsv($file, ['Date', 'Time', 'Employee', 'Department', 'Type', 'Source']);
+
             foreach ($attendances as $attendance) {
                 fputcsv($file, [
-                    $attendance->user->employee_id,
-                    $attendance->user->first_name . ' ' . $attendance->user->last_name,
-                    $attendance->user->department,
-                    $attendance->date,
-                    $attendance->time_in,
-                    $attendance->time_out,
-                    $attendance->total_hours,
-                    ucfirst(str_replace('_', ' ', $attendance->status)),
-                    $attendance->notes,
-                    $attendance->is_regularized ? 'Yes' : 'No',
-                    $attendance->regularization_reason,
-                    $attendance->biometric_id,
-                    $attendance->location
+                    $attendance->created_at->format('Y-m-d'),
+                    $attendance->created_at->format('H:i:s'),
+                    $attendance->employee->full_name ?? 'N/A',
+                    $attendance->employee->department->department_name ?? 'N/A',
+                    $attendance->attendanceType->name ?? 'N/A',
+                    $attendance->attendanceSource->name ?? 'N/A',
                 ]);
             }
 
@@ -362,5 +373,192 @@ class AdminAttendanceController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Show attendance reports page
+     */
+    public function reports(Request $request)
+    {
+        $startDate = $request->get('start_date')
+            ? Carbon::parse($request->get('start_date'))
+            : now()->startOfMonth();
+
+        $endDate = $request->get('end_date')
+            ? Carbon::parse($request->get('end_date'))
+            : now()->endOfMonth();
+
+        $employees = Employee::whereHas('jobStatus', function($q) {
+            $q->where('name', 'Active');
+        })->orderBy('first_name')->get();
+
+        $departments = Department::orderBy('name')->get();
+        
+        $overallStats = $this->getOverallStats($startDate, $endDate);
+
+        return view('admin.attendance.reports', compact(
+            'employees',
+            'departments',
+            'overallStats',
+            'startDate',
+            'endDate'
+        ));
+    }
+
+    /**
+     * Get attendance summary for all employees in detailed report
+     */
+    public function getAttendanceSummary(Request $request)
+    {
+        $startDate = $request->get('start_date')
+            ? Carbon::parse($request->get('start_date'))
+            : now()->startOfMonth();
+
+        $endDate = $request->get('end_date')
+            ? Carbon::parse($request->get('end_date'))
+            : now()->endOfMonth();
+
+        $query = Attendance::with(['employee', 'attendanceType', 'attendanceSource'])
+            ->whereBetween('created_at', [$startDate, $endDate]);
+
+        if ($request->has('department_id') && $request->department_id) {
+            $query->whereHas('employee', function($q) use ($request) {
+                $q->where('department_id', $request->department_id);
+            });
+        }
+
+        $attendances = $query->get();
+
+        // Group by employee
+        $employeeData = [];
+        foreach ($attendances->groupBy('employee_id') as $employeeId => $records) {
+            $employee = $records->first()->employee;
+            
+            // Count using foreach loops
+            $checkins = 0;
+            $checkouts = 0;
+            $biometric = 0;
+            $manual = 0;
+            
+            foreach ($records as $record) {
+                if ($record->attendanceType && strtolower($record->attendanceType->name) === 'in') {
+                    $checkins++;
+                }
+                if ($record->attendanceType && strtolower($record->attendanceType->name) === 'out') {
+                    $checkouts++;
+                }
+                if ($record->attendanceSource && strtolower($record->attendanceSource->name) === 'biometric') {
+                    $biometric++;
+                }
+                if ($record->attendanceSource && strtolower($record->attendanceSource->name) === 'manual') {
+                    $manual++;
+                }
+            }
+
+            $employeeData[] = [
+                'employee_name' => $employee->first_name . ' ' . $employee->last_name,
+                'department' => $employee->department->name ?? 'N/A',
+                'checkins' => $checkins,
+                'checkouts' => $checkouts,
+                'biometric' => $biometric,
+                'manual' => $manual,
+                'total' => $records->count()
+            ];
+        }
+
+        return response()->json($employeeData);
+    }
+
+    /**
+     * Get employee attendance records
+     */
+    public function getEmployeeAttendance($employeeId, Request $request)
+    {
+        $startDate = $request->get('start_date')
+            ? Carbon::parse($request->get('start_date'))
+            : now()->startOfMonth();
+
+        $endDate = $request->get('end_date')
+            ? Carbon::parse($request->get('end_date'))
+            : now()->endOfMonth();
+
+        $attendances = Attendance::with(['attendanceType', 'attendanceSource'])
+            ->where('employee_id', $employeeId)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Count using foreach loop
+        $checkins = 0;
+        $checkouts = 0;
+        $biometric = 0;
+        
+        foreach ($attendances as $record) {
+            if ($record->attendanceType && strtolower($record->attendanceType->name) === 'in') {
+                $checkins++;
+            }
+            if ($record->attendanceType && strtolower($record->attendanceType->name) === 'out') {
+                $checkouts++;
+            }
+            if ($record->attendanceSource && strtolower($record->attendanceSource->name) === 'biometric') {
+                $biometric++;
+            }
+        }
+        
+        $total = $attendances->count();
+        $biometricPercent = $total > 0 ? round(($biometric / $total) * 100) : 0;
+
+        $records = $attendances->map(function($record) {
+            $typeName = $record->attendanceType ? $record->attendanceType->name : 'N/A';
+            $sourceName = $record->attendanceSource ? $record->attendanceSource->name : 'N/A';
+            
+            // Convert short names to display names
+            $displayType = strtolower($typeName) === 'in' ? 'Check-in' : (strtolower($typeName) === 'out' ? 'Check-out' : $typeName);
+            $displaySource = strtolower($sourceName) === 'biometric' ? 'Biometric' : (strtolower($sourceName) === 'manual' ? 'Manual' : $sourceName);
+            
+            return [
+                'date' => $record->created_at->format('Y-m-d'),
+                'time' => $record->created_at->format('H:i:s'),
+                'type' => $displayType,
+                'source' => $displaySource
+            ];
+        });
+
+        return response()->json([
+            'stats' => [
+                'total' => $total,
+                'checkins' => $checkins,
+                'checkouts' => $checkouts,
+                'biometric_percent' => $biometricPercent
+            ],
+            'records' => $records
+        ]);
+    }
+
+    /**
+     * Get department-wise attendance summary
+     */
+    public function departmentSummary(Request $request)
+    {
+        $startDate = $request->get('start_date')
+            ? Carbon::parse($request->get('start_date'))
+            : now()->startOfMonth();
+
+        $endDate = $request->get('end_date')
+            ? Carbon::parse($request->get('end_date'))
+            : now()->endOfMonth();
+
+        $summary = DB::table('tbl_attendances')
+            ->join('tbl_employee', 'tbl_attendances.employee_id', '=', 'tbl_employee.id')
+            ->join('tbl_departments', 'tbl_employee.department_id', '=', 'tbl_departments.id')
+            ->join('tbl_attendance_types', 'tbl_attendances.attendance_type_id', '=', 'tbl_attendance_types.id')
+            ->whereBetween('tbl_attendances.created_at', [$startDate, $endDate])
+            ->where('tbl_attendance_types.name', 'Check-in')
+            ->select('tbl_departments.name as department_name', DB::raw('COUNT(*) as total_checkins'))
+            ->groupBy('tbl_departments.id', 'tbl_departments.name')
+            ->orderBy('total_checkins', 'desc')
+            ->get();
+
+        return response()->json($summary);
     }
 }
